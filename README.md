@@ -4,51 +4,109 @@
 
 ## What is TOKN?
 
-TOKN is a domain-specific format that converts KiCad schematic files (`.kicad_sch`) into a token-efficient representation. It's built on [TOON](https://github.com/toon-format/spec) (Token-Oriented Object Notation).
+TOKN converts KiCad schematic files (`.kicad_sch`) into a token-efficient representation, achieving **~94% token reduction** while preserving electrical connectivity, component positions, and wire geometry. It's built on [TOON](https://github.com/toon-format/spec) (Token-Oriented Object Notation).
+
+![MAX9926 Comparison](examples/max9926-vr-conditioner/comparison.png)
+
+### Results
+
+| Metric | KiCad | TOKN | Reduction |
+|--------|-------|------|-----------|
+| File Size | 83,834 bytes | 5,077 bytes | **-93.9%** |
+| Lines | 4,535 | 143 | **-96.8%** |
+| Tokens (est.) | 20,958 | 1,269 | **-93.9%** |
 
 ### Goals
 
-- **Minimise tokens** — strip UUIDs, absolute coordinates, and structural noise
-- **Preserve design intent** — component types, values, net connectivity, hierarchy
-- **Enable round-trip conversion** — `kicad_sch → TOKN → kicad_sch` produces functionally equivalent schematics
+- **Minimise tokens** — strip UUIDs, graphics, structural noise
+- **Preserve design intent** — component types, values, positions, connectivity
+- **Preserve layout** — wire geometry for schematic reconstruction
+- **Enable round-trip conversion** — `kicad_sch → TOKN → kicad_sch`
 - **Be learnable** — consistent structure for LLM pattern learning
 
-### Example
+## Format
 
-A KiCad schematic like:
-
-```lisp
-(kicad_sch
-  (symbol (lib_id "Device:R") (at 100 50 0) (uuid "abc123")
-    (property "Reference" "R1" (at 100 40 0))
-    (property "Value" "10k" (at 100 60 0)))
-  (symbol (lib_id "Device:C") (at 150 75 90) (uuid "def456")
-    (property "Reference" "C1" (at 160 75 0))
-    (property "Value" "100nF" (at 140 75 0)))
-  (wire (pts (xy 100 60) (xy 100 75) (xy 150 75)))
-  (label "FILT_OUT" (at 175 75 0)))
-```
-
-Becomes something like:
+TOKN v1.1 includes three sections:
 
 ```toon
-components[2]{ref,type,value}:
-R1,R,10k
-C1,C,100nF
+# TOKN v1
+title: MAX9926 Dual VR Conditioner
 
-nets[2]{name,pins}:
-N1,"R1.2,C1.1"
-FILT_OUT,"C1.2"
+components[10]{ref,type,value,fp,x,y,w,h,a}:
+  C66,C,1n,,160.02,73.66,0.00,7.62,0
+  IC16,MAX9926UAEE_V+,MAX9926UAEE_V+,SOP65P602X175-16N,129.54,88.90,38.10,17.78,0
+  R75,R,10k,0603,168.91,67.31,7.62,0.00,90
+
+nets[12]{name,pins}:
+  +5VD,"C68.1,C69.1,C70.1,IC16.14"
+  GND,"C68.2,C69.2,C70.2,IC16.1,IC16.3"
+  DIN0-VR1-IN+,R75.2
+
+wires[45]{net,pts}:
+  +5VD,"156.21 85.09,167.64 85.09"
+  +5VD,"167.64 85.09,179.07 85.09"
 ```
 
-## Status
+### Component Fields
 
-This project is in the specification phase. See [plan.md](plan.md) for the development roadmap.
+| Field | Description |
+|-------|-------------|
+| `ref` | Reference designator (R1, C1, U1) |
+| `type` | Normalised type (R, C, CP, LED, MCP2551, etc.) |
+| `value` | Component value or part number |
+| `fp` | Footprint shorthand (0603, SOIC-8, etc.) |
+| `x,y` | Center position (mm) |
+| `w,h` | Pin spread dimensions (mm) |
+| `a` | Rotation angle (0, 90, 180, 270) |
+
+## Usage
+
+### Convert KiCad to TOKN
+
+```bash
+python src/tokn_encoder.py schematic.kicad_sch output.tokn
+```
+
+### Render Comparison
+
+```bash
+python src/render.py --compare schematic.kicad_sch output.tokn comparison.png
+```
+
+### Parse TOKN
+
+```bash
+python src/tokn_parser.py output.tokn
+```
+
+## Known Issues
+
+- **Component rotation**: Some passive components (R, C) may render with incorrect orientation in the preview. The rotation angle is stored correctly but the renderer doesn't always interpret it properly for all symbol orientations.
+
+## Project Structure
+
+```
+tokn/
+├── spec/
+│   └── TOKN-v1.md          # Format specification
+├── src/
+│   ├── kicad_sch.py        # KiCad schematic parser
+│   ├── connectivity.py     # Net/connectivity analyzer
+│   ├── tokn_encoder.py     # KiCad → TOKN converter
+│   ├── tokn_parser.py      # TOKN parser
+│   └── render.py           # Schematic renderer
+└── examples/
+    ├── mcp2551-can-transceiver/
+    ├── max232-uart-rs232/
+    ├── max9926-vr-conditioner/
+    ├── 4-channel-current-source/
+    └── tpic8101-knock-sensor/
+```
 
 ## Related
 
 - [TOON Specification](https://github.com/toon-format/spec)
-- [TOON Reference Implementation](https://github.com/toon-format/toon)
+- [KiCad](https://www.kicad.org/)
 
 ## License
 
