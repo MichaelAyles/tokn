@@ -7,6 +7,7 @@ Supports side-by-side comparison to verify no data loss.
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
+import tiktoken
 from pathlib import Path
 
 from kicad_sch import Schematic, Component, parse_schematic
@@ -341,9 +342,15 @@ def draw_tokn_component(ax, comp):
                     ha='center', va='top', zorder=5, color='gray')
 
 
-def estimate_tokens(text: str) -> int:
-    """Estimate token count (rough approximation: ~4 chars per token)."""
-    return len(text) // 4
+# Use cl100k_base encoding (used by GPT-4, Claude, etc.)
+_tokenizer = None
+
+def count_tokens(text: str) -> int:
+    """Count tokens using tiktoken (cl100k_base encoding)."""
+    global _tokenizer
+    if _tokenizer is None:
+        _tokenizer = tiktoken.get_encoding("cl100k_base")
+    return len(_tokenizer.encode(text))
 
 
 def get_file_stats(filepath: str) -> dict:
@@ -353,7 +360,7 @@ def get_file_stats(filepath: str) -> dict:
 
     lines = content.count('\n') + (1 if content and not content.endswith('\n') else 0)
     size = len(content.encode('utf-8'))
-    tokens = estimate_tokens(content)
+    tokens = count_tokens(content)
 
     return {
         'size': size,
@@ -423,7 +430,7 @@ def render_comparison(kicad_path: str, tokn_path: str, output_path: str = None, 
          fmt_diff(kicad_stats['size'], tokn_stats['size']), fmt_pct(kicad_stats['size'], tokn_stats['size'])],
         ['Lines', f"{kicad_stats['lines']:,}", f"{tokn_stats['lines']:,}",
          fmt_diff(kicad_stats['lines'], tokn_stats['lines']), fmt_pct(kicad_stats['lines'], tokn_stats['lines'])],
-        ['Tokens (est.)', f"{kicad_stats['tokens']:,}", f"{tokn_stats['tokens']:,}",
+        ['Tokens', f"{kicad_stats['tokens']:,}", f"{tokn_stats['tokens']:,}",
          fmt_diff(kicad_stats['tokens'], tokn_stats['tokens']), fmt_pct(kicad_stats['tokens'], tokn_stats['tokens'])],
     ]
 

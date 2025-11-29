@@ -4,7 +4,7 @@
 
 ## What is TOKN?
 
-TOKN converts KiCad schematic files (`.kicad_sch`) into a token-efficient representation, achieving **~94% token reduction** while preserving electrical connectivity, component positions, and wire geometry. It's built on [TOON](https://github.com/toon-format/spec) (Token-Oriented Object Notation).
+TOKN converts KiCad schematic files (`.kicad_sch`) into a token-efficient representation, achieving **>92% token reduction** while preserving electrical connectivity, component positions, and wire geometry. It's built on [TOON](https://github.com/toon-format/spec) (Token-Oriented Object Notation).
 
 ![MAX9926 Comparison](examples/max9926-vr-conditioner/comparison.png)
 
@@ -14,7 +14,7 @@ TOKN converts KiCad schematic files (`.kicad_sch`) into a token-efficient repres
 |--------|-------|------|-----------|
 | File Size | 83,834 bytes | 5,077 bytes | **-93.9%** |
 | Lines | 4,535 | 143 | **-96.8%** |
-| Tokens (est.) | 20,958 | 1,269 | **-93.9%** |
+| Tokens | 38,678 | 3,027 | **-92.2%** |
 
 ### Goals
 
