@@ -67,6 +67,14 @@ wires[45]{net,pts}:
 python src/tokn_encoder.py schematic.kicad_sch output.tokn
 ```
 
+### Convert TOKN back to KiCad (experimental)
+
+```bash
+python src/tokn_decoder.py output.tokn output.kicad_sch
+```
+
+Note: The decoder is experimental. It generates valid KiCad schematics but uses simplified symbol representations (rectangles for ICs). See [docs/kicad-schematic-generation.md](docs/kicad-schematic-generation.md) for technical details.
+
 ### Render Comparison
 
 ```bash
@@ -89,11 +97,14 @@ python src/tokn_parser.py output.tokn
 tokn/
 ├── spec/
 │   └── TOKN-v1.md          # Format specification
+├── docs/
+│   └── kicad-schematic-generation.md  # Research on KiCad file generation
 ├── src/
 │   ├── kicad_sch.py        # KiCad schematic parser
 │   ├── connectivity.py     # Net/connectivity analyzer
 │   ├── tokn_encoder.py     # KiCad → TOKN converter
 │   ├── tokn_parser.py      # TOKN parser
+│   ├── tokn_decoder.py     # TOKN → KiCad converter (experimental)
 │   └── render.py           # Schematic renderer
 └── examples/
     ├── mcp2551-can-transceiver/
