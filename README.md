@@ -24,6 +24,35 @@ TOKN converts KiCad schematic files (`.kicad_sch`) into a token-efficient repres
 - **Enable round-trip conversion** — `kicad_sch → TOKN → kicad_sch`
 - **Be learnable** — consistent structure for LLM pattern learning
 
+### Conversion Flow
+
+```
+┌─────────────────┐      encode      ┌─────────────────┐
+│                 │ ───────────────► │                 │
+│  .kicad_sch     │   -92% tokens    │     .tokn       │
+│  (38K tokens)   │                  │   (3K tokens)   │
+│                 │ ◄─────────────── │                 │
+└─────────────────┘      decode      └─────────────────┘
+                     (experimental)
+```
+
+### LLM Training Pipeline
+
+```
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│   KiCad      │     │    TOKN      │     │    LLM       │
+│  Schematics  │────►│   Corpus     │────►│  Training    │
+│   (large)    │     │  (compact)   │     │   Data       │
+└──────────────┘     └──────────────┘     └──────────────┘
+                            │
+                            ▼
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│   KiCad      │     │    TOKN      │     │    LLM       │
+│  Schematic   │◄────│   Output     │◄────│  Generation  │
+│   (usable)   │     │  (compact)   │     │   Output     │
+└──────────────┘     └──────────────┘     └──────────────┘
+```
+
 ## Format
 
 TOKN v1.1 includes three sections:
@@ -90,6 +119,46 @@ python src/tokn_parser.py output.tokn
 ## Known Issues
 
 - **Component rotation**: Some passive components (R, C) may render with incorrect orientation in the preview. The rotation angle is stored correctly but the renderer doesn't always interpret it properly for all symbol orientations.
+
+## Architecture
+
+```
+                         ┌─────────────────────────────────────┐
+                         │           .kicad_sch                │
+                         └──────────────────┬──────────────────┘
+                                            │
+                         ┌──────────────────▼──────────────────┐
+                         │            kicad_sch.py             │
+                         │   (S-expr parser, symbol extract)   │
+                         └──────────────────┬──────────────────┘
+                                            │
+              ┌─────────────────────────────┼─────────────────────────────┐
+              │                             │                             │
+              ▼                             ▼                             ▼
+┌─────────────────────────┐  ┌─────────────────────────┐  ┌─────────────────────────┐
+│    connectivity.py      │  │    tokn_encoder.py      │  │      render.py          │
+│  (net/pin extraction)   │  │   (TOKN generation)     │  │  (visual preview)       │
+└─────────────────────────┘  └────────────┬────────────┘  └─────────────────────────┘
+                                          │
+                                          ▼
+                         ┌─────────────────────────────────────┐
+                         │              .tokn                  │
+                         └──────────────────┬──────────────────┘
+                                            │
+              ┌─────────────────────────────┼─────────────────────────────┐
+              │                             │                             │
+              ▼                             ▼                             ▼
+┌─────────────────────────┐  ┌─────────────────────────┐  ┌─────────────────────────┐
+│    tokn_parser.py       │  │    tokn_decoder.py      │  │      render.py          │
+│   (parse to objects)    │  │  (KiCad generation)     │  │  (visual preview)       │
+└─────────────────────────┘  └────────────┬────────────┘  └─────────────────────────┘
+                                          │
+                                          ▼
+                         ┌─────────────────────────────────────┐
+                         │           .kicad_sch                │
+                         │          (reconstructed)            │
+                         └─────────────────────────────────────┘
+```
 
 ## Project Structure
 
