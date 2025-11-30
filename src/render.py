@@ -74,14 +74,69 @@ def render_tokn(ax, sch: ToknSchematic):
 
     all_x, all_y = [], []
 
-    # Draw wires (grouped by net for coloring)
-    net_colors = {}
-    color_cycle = plt.cm.tab10.colors
+    # Build map of component pin positions from net definitions and wire endpoints
+    # For each (ref, pin) pair, find the wire endpoint that's closest to the component
+    pin_positions = {}  # (ref, pin_num) -> (x, y)
+    comp_map = {c.ref: c for c in sch.components}
 
-    for i, wire in enumerate(sch.wires):
-        if wire.net not in net_colors:
-            net_colors[wire.net] = color_cycle[len(net_colors) % len(color_cycle)]
+    # First, collect all wire endpoints for each net
+    net_wire_points = {}  # net_name -> list of all wire endpoints
+    for wire in sch.wires:
+        if wire.net not in net_wire_points:
+            net_wire_points[wire.net] = []
+        for pt in wire.points:
+            net_wire_points[wire.net].append(pt)
 
+    # For each pin in each net, find the closest wire point to the component
+    for net in sch.nets:
+        wire_points = net_wire_points.get(net.name, [])
+        for ref, pin_num in net.pins:
+            if ref in comp_map and wire_points:
+                comp = comp_map[ref]
+                # Find the wire point closest to this component's center
+                best_pt = None
+                best_dist = float('inf')
+                for pt in wire_points:
+                    dist = ((pt[0] - comp.x) ** 2 + (pt[1] - comp.y) ** 2) ** 0.5
+                    if dist < best_dist:
+                        best_dist = dist
+                        best_pt = pt
+                if best_pt:
+                    pin_positions[(ref, pin_num)] = best_pt
+
+    # Build set of points that are connected to components (wire endpoints near component bounds)
+    component_connected_points = set()
+    for comp in sch.components:
+        # Get component bounding box with small tolerance
+        # Use actual pin spread + small margin, not a large minimum
+        half_w = comp.w / 2 + 2
+        half_h = comp.h / 2 + 2
+        # For ICs with significant size, ensure minimum bounds
+        if comp.type not in ('R', 'C', 'CP', 'L', 'D'):
+            half_w = max(half_w, 5)
+            half_h = max(half_h, 5)
+        for wire in sch.wires:
+            for pt in wire.points:
+                px, py = pt
+                # Check if point is within or near the component bounds
+                if (comp.x - half_w <= px <= comp.x + half_w and
+                    comp.y - half_h <= py <= comp.y + half_h):
+                    component_connected_points.add((round(px, 2), round(py, 2)))
+
+    # Count wire connections at each point
+    point_counts = {}
+    for wire in sch.wires:
+        for pt in wire.points:
+            key = (round(pt[0], 2), round(pt[1], 2))
+            point_counts[key] = point_counts.get(key, 0) + 1
+
+    # Points where wires connect (for label placement logic)
+    wire_connected_points = {pt for pt, count in point_counts.items() if count >= 2}
+    # Points needing junction dots (3+ connections, not simple corners)
+    junction_dots = {pt for pt, count in point_counts.items() if count >= 3}
+
+    # Draw wires
+    for wire in sch.wires:
         if len(wire.points) >= 2:
             xs = [p[0] for p in wire.points]
             ys = [p[1] for p in wire.points]
@@ -89,41 +144,98 @@ def render_tokn(ax, sch: ToknSchematic):
             all_x.extend(xs)
             all_y.extend(ys)
 
-            # Draw junction at wire endpoints
-            for x, y in wire.points:
-                all_x.append(x)
-                all_y.append(y)
+    # Draw junctions (only for 3+ wire connections, not corners)
+    for (x, y) in junction_dots:
+        circle = plt.Circle((x, y), 1.0, color='blue', zorder=3)
+        ax.add_patch(circle)
 
-    # Find junctions (points where multiple wires meet)
-    point_counts = {}
+    # Draw net labels at ALL unconnected wire ends
+    # Power nets get power symbols, signal nets get green square + label
+    power_nets = {'+5V', '+12V', '+3V3', '+3.3V', 'GND', 'VCC', 'VDD', 'VSS', 'VBAT'}
+
     for wire in sch.wires:
-        for pt in wire.points:
-            key = (round(pt[0], 2), round(pt[1], 2))
-            point_counts[key] = point_counts.get(key, 0) + 1
+        if not wire.points:
+            continue
 
-    for (x, y), count in point_counts.items():
-        if count > 1:
-            circle = plt.Circle((x, y), 1.0, color='blue', zorder=3)
-            ax.add_patch(circle)
+        # Only label named nets (not anonymous N1, N2, etc.)
+        if wire.net.startswith('N') and wire.net[1:].isdigit():
+            continue
 
-    # Draw net labels at first wire endpoint
-    net_labeled = set()
-    for wire in sch.wires:
-        if wire.net not in net_labeled and wire.points:
-            x, y = wire.points[-1]  # Label at end of wire
-            # Only label named nets (not anonymous N1, N2, etc.)
-            if not wire.net.startswith('N') or not wire.net[1:].isdigit():
-                color = 'red' if wire.net in ('+5V', '+12V', '+3V3', 'GND', 'VCC', 'VDD') else 'green'
-                ax.annotate(wire.net, (x, y), fontsize=7, color=color,
-                           xytext=(3, -3), textcoords='offset points', zorder=5)
-            net_labeled.add(wire.net)
+        is_power = wire.net in power_nets
+
+        # Find the unconnected endpoint
+        first_pt = (round(wire.points[0][0], 2), round(wire.points[0][1], 2))
+        last_pt = (round(wire.points[-1][0], 2), round(wire.points[-1][1], 2))
+
+        first_connected = first_pt in component_connected_points or first_pt in wire_connected_points
+        last_connected = last_pt in component_connected_points or last_pt in wire_connected_points
+
+        # Prefer the unconnected end; if both are unconnected or both connected, use first
+        if not first_connected and last_connected:
+            label_pt = wire.points[0]
+            other_pt = wire.points[1] if len(wire.points) > 1 else wire.points[0]
+        elif first_connected and not last_connected:
+            label_pt = wire.points[-1]
+            other_pt = wire.points[-2] if len(wire.points) > 1 else wire.points[-1]
+        elif not first_connected and not last_connected:
+            label_pt = wire.points[0]
+            other_pt = wire.points[1] if len(wire.points) > 1 else wire.points[0]
+        else:
+            # Both connected - skip labeling this wire
+            continue
+
+        x, y = label_pt
+        ox, oy = other_pt
+
+        # Determine text alignment based on wire direction
+        dx = x - ox
+        dy = y - oy
+
+        if is_power:
+            # Draw power symbol - 50% smaller
+            if wire.net == 'GND':
+                # GND symbol - downward pointing (3 horizontal lines)
+                ax.plot([x - 1.5, x + 1.5], [y, y], 'r-', linewidth=1.5, zorder=4)
+                ax.plot([x - 1, x + 1], [y + 0.75, y + 0.75], 'r-', linewidth=1.5, zorder=4)
+                ax.plot([x - 0.5, x + 0.5], [y + 1.5, y + 1.5], 'r-', linewidth=1.5, zorder=4)
+            else:
+                # VCC/+5V symbol - upward pointing triangle
+                triangle = plt.Polygon([(x, y - 1.5), (x - 1.5, y + 0.5), (x + 1.5, y + 0.5)],
+                                       fill=False, edgecolor='red', linewidth=1.5, zorder=4)
+                ax.add_patch(triangle)
+                ax.annotate(wire.net, (x, y - 2), fontsize=5, color='red',
+                           ha='center', va='bottom', zorder=5)
+        else:
+            # Signal net - green square marker + text label
+            ax.plot(x, y, 's', color='green', markersize=5, zorder=4)
+
+            if abs(dx) > abs(dy):
+                # Horizontal wire
+                if dx > 0:
+                    ha, text_offset = 'left', (5, 0)
+                else:
+                    ha, text_offset = 'right', (-5, 0)
+                va = 'center'
+            else:
+                # Vertical wire
+                if dy > 0:
+                    va, text_offset = 'top', (0, 5)
+                else:
+                    va, text_offset = 'bottom', (0, -5)
+                ha = 'center'
+
+            ax.annotate(wire.net, (x, y), fontsize=7, color='green',
+                       xytext=text_offset, textcoords='offset points',
+                       ha=ha, va=va, zorder=5)
 
     # Draw components
     for comp in sch.components:
         if comp.x != 0 or comp.y != 0:
             all_x.append(comp.x)
             all_y.append(comp.y)
-            draw_tokn_component(ax, comp)
+            # Get pin positions for this component
+            comp_pins = {pin: pos for (ref, pin), pos in pin_positions.items() if ref == comp.ref}
+            draw_tokn_component(ax, comp, comp_pins)
 
     # Show stats
     ax.text(0.02, 0.98, f"Components: {len(sch.components)}\nNets: {len(sch.nets)}\nWires: {len(sch.wires)}",
@@ -245,32 +357,50 @@ def draw_capacitor(ax, comp: Component):
                     'k-', linewidth=2, zorder=2)
 
 
-def draw_tokn_component(ax, comp):
-    """Draw a TOKN component symbol."""
+def draw_tokn_component(ax, comp, pin_positions=None):
+    """Draw a TOKN component symbol.
+
+    Args:
+        ax: matplotlib axes
+        comp: component object with x, y, w, h, type, ref, value, a
+        pin_positions: dict mapping pin number (str) to (x, y) position
+    """
+    if pin_positions is None:
+        pin_positions = {}
+
     x, y = comp.x, comp.y
     comp_type = comp.type
     w, h = comp.w, comp.h
     angle = comp.a
 
-    # For 2-pin components (R, C), use angle directly
-    # angle=0 means horizontal body, angle=90 means vertical body
-    if comp_type in ('R', 'C', 'CP'):
-        is_vertical = (angle % 180) == 90
+    # Determine orientation from pin spread (w, h)
+    # h > w means pins are spread vertically -> vertical component
+    # w > h means pins are spread horizontally -> horizontal component
+    if h > w + 0.1:
+        is_vertical = True
+        pin_spread = h
+    elif w > h + 0.1:
+        is_vertical = False
+        pin_spread = w
     else:
-        # For ICs, use pin spread to determine orientation
-        if h > w + 0.1:
-            is_vertical = True
-        elif w > h + 0.1:
-            is_vertical = False
-        else:
-            is_vertical = (angle % 180) == 90
+        # Square or no spread - use angle as fallback
+        is_vertical = (angle % 180) == 90
+        pin_spread = max(w, h)
 
     # Draw based on component type
     if comp_type == 'R':
-        # Simple resistor rectangle
+        # Resistor - 50% smaller body with lead wires to pin positions
+        body_half = 2  # half-length of resistor body
+        body_width = 0.75  # half-width of resistor body
         if is_vertical:
+            pin1_y = y - pin_spread / 2  # top pin
+            pin2_y = y + pin_spread / 2  # bottom pin
+            # Lead wires from pins to body
+            ax.plot([x, x], [pin1_y, y - body_half], 'k-', linewidth=1.5, zorder=2)
+            ax.plot([x, x], [y + body_half, pin2_y], 'k-', linewidth=1.5, zorder=2)
+            # Body
             rect = patches.FancyBboxPatch(
-                (x - 1.5, y - 4), 3, 8,
+                (x - body_width, y - body_half), body_width * 2, body_half * 2,
                 boxstyle="round,pad=0.02",
                 facecolor='white',
                 edgecolor='black',
@@ -278,13 +408,19 @@ def draw_tokn_component(ax, comp):
                 zorder=2
             )
             ax.add_patch(rect)
-            ax.annotate(comp.ref, (x - 3, y), fontsize=8, fontweight='bold',
+            ax.annotate(comp.ref, (x - 2, y), fontsize=7, fontweight='bold',
                         ha='right', va='center', zorder=5)
-            ax.annotate(comp.value, (x + 3, y), fontsize=7,
+            ax.annotate(comp.value, (x + 2, y), fontsize=6,
                         ha='left', va='center', zorder=5, color='gray')
         else:
+            pin1_x = x - pin_spread / 2  # left pin
+            pin2_x = x + pin_spread / 2  # right pin
+            # Lead wires from pins to body
+            ax.plot([pin1_x, x - body_half], [y, y], 'k-', linewidth=1.5, zorder=2)
+            ax.plot([x + body_half, pin2_x], [y, y], 'k-', linewidth=1.5, zorder=2)
+            # Body
             rect = patches.FancyBboxPatch(
-                (x - 4, y - 1.5), 8, 3,
+                (x - body_half, y - body_width), body_half * 2, body_width * 2,
                 boxstyle="round,pad=0.02",
                 facecolor='white',
                 edgecolor='black',
@@ -292,30 +428,123 @@ def draw_tokn_component(ax, comp):
                 zorder=2
             )
             ax.add_patch(rect)
-            ax.annotate(comp.ref, (x, y - 3), fontsize=8, fontweight='bold',
+            ax.annotate(comp.ref, (x, y - 2), fontsize=7, fontweight='bold',
                         ha='center', va='top', zorder=5)
-            ax.annotate(comp.value, (x, y + 3), fontsize=7,
+            ax.annotate(comp.value, (x, y + 2), fontsize=6,
                         ha='center', va='bottom', zorder=5, color='gray')
     elif comp_type == 'C' or comp_type == 'CP':
-        # Simple capacitor symbol
+        # Capacitor - 50% smaller plates with lead wires
+        plate_width = 1.5  # half-width of plates
+        gap = 0.4  # gap between plates
         if is_vertical:
-            ax.plot([x, x], [y - 4, y - 0.5], 'k-', linewidth=1.5, zorder=2)
-            ax.plot([x, x], [y + 0.5, y + 4], 'k-', linewidth=1.5, zorder=2)
-            ax.plot([x - 3, x + 3], [y - 0.5, y - 0.5], 'k-', linewidth=2, zorder=2)
-            ax.plot([x - 3, x + 3], [y + 0.5, y + 0.5], 'k-', linewidth=2, zorder=2)
-            ax.annotate(comp.ref, (x - 5, y), fontsize=8, fontweight='bold',
-                        ha='right', va='center', zorder=5)
-            ax.annotate(comp.value, (x + 5, y), fontsize=7,
-                        ha='left', va='center', zorder=5, color='gray')
+            pin1_y = y - pin_spread / 2  # top pin
+            pin2_y = y + pin_spread / 2  # bottom pin
+            # Lead wires from pins to plates
+            ax.plot([x, x], [pin1_y, y - gap], 'k-', linewidth=1.5, zorder=2)
+            ax.plot([x, x], [y + gap, pin2_y], 'k-', linewidth=1.5, zorder=2)
+            # Plates
+            ax.plot([x - plate_width, x + plate_width], [y - gap, y - gap], 'k-', linewidth=2, zorder=2)
+            ax.plot([x - plate_width, x + plate_width], [y + gap, y + gap], 'k-', linewidth=2, zorder=2)
+            # Labels
+            ax.annotate(comp.ref, (x - 2, y), fontsize=7, fontweight='bold',
+                        ha='right', va='bottom', zorder=5)
+            ax.annotate(comp.value, (x - 2, y), fontsize=6,
+                        ha='right', va='top', zorder=5, color='gray')
         else:
-            ax.plot([x - 4, x - 0.5], [y, y], 'k-', linewidth=1.5, zorder=2)
-            ax.plot([x + 0.5, x + 4], [y, y], 'k-', linewidth=1.5, zorder=2)
-            ax.plot([x - 0.5, x - 0.5], [y - 3, y + 3], 'k-', linewidth=2, zorder=2)
-            ax.plot([x + 0.5, x + 0.5], [y - 3, y + 3], 'k-', linewidth=2, zorder=2)
-            ax.annotate(comp.ref, (x, y - 5), fontsize=8, fontweight='bold',
-                        ha='center', va='top', zorder=5)
-            ax.annotate(comp.value, (x, y + 5), fontsize=7,
-                        ha='center', va='bottom', zorder=5, color='gray')
+            pin1_x = x - pin_spread / 2  # left pin
+            pin2_x = x + pin_spread / 2  # right pin
+            # Lead wires from pins to plates
+            ax.plot([pin1_x, x - gap], [y, y], 'k-', linewidth=1.5, zorder=2)
+            ax.plot([x + gap, pin2_x], [y, y], 'k-', linewidth=1.5, zorder=2)
+            # Plates
+            ax.plot([x - gap, x - gap], [y - plate_width, y + plate_width], 'k-', linewidth=2, zorder=2)
+            ax.plot([x + gap, x + gap], [y - plate_width, y + plate_width], 'k-', linewidth=2, zorder=2)
+            # Labels
+            ax.annotate(comp.ref, (x, y - 2), fontsize=7, fontweight='bold',
+                        ha='right', va='bottom', zorder=5)
+            ax.annotate(comp.value, (x, y - 2), fontsize=6,
+                        ha='left', va='bottom', zorder=5, color='gray')
+    elif comp_type in ('QNPN', 'QPNP', 'NMOS', 'PMOS') or comp_type.startswith('BSS') or comp_type.startswith('2N'):
+        # Transistor - draw circle with leads to actual pin positions
+        body_size = 2
+        # Draw circle for body
+        circle = plt.Circle((x, y), body_size, fill=False, edgecolor='black', linewidth=1.5, zorder=2)
+        ax.add_patch(circle)
+
+        # Draw leads to each pin position
+        for pin_num, (px, py) in pin_positions.items():
+            # Draw line from component center to pin position
+            # But stop at the circle edge
+            dx, dy = px - x, py - y
+            dist = (dx**2 + dy**2) ** 0.5
+            if dist > 0:
+                # Start point on circle edge
+                edge_x = x + dx / dist * body_size
+                edge_y = y + dy / dist * body_size
+                ax.plot([edge_x, px], [edge_y, py], 'k-', linewidth=1.5, zorder=2)
+
+        # Labels
+        ax.annotate(comp.ref, (x + 3, y - 2), fontsize=6, fontweight='bold',
+                    ha='left', va='center', zorder=5)
+        ax.annotate(comp.value, (x + 3, y + 2), fontsize=5,
+                    ha='left', va='center', zorder=5, color='gray')
+    elif comp_type.startswith('NCV') or comp_type.startswith('LM') or 'REG' in comp_type.upper() or '317' in comp_type or '7805' in comp_type:
+        # Voltage regulator (3-pin) - draw as small rectangle with leads to actual pin positions
+        reg_w = 4
+        reg_h = 3
+        rect = patches.FancyBboxPatch(
+            (x - reg_w/2, y - reg_h/2), reg_w, reg_h,
+            boxstyle="round,pad=0.02",
+            facecolor='white',
+            edgecolor='black',
+            linewidth=1.5,
+            zorder=2
+        )
+        ax.add_patch(rect)
+
+        # Draw leads to each pin position
+        for pin_num, (px, py) in pin_positions.items():
+            # Find the closest edge point on the rectangle
+            # Clamp to rectangle bounds
+            edge_x = max(x - reg_w/2, min(x + reg_w/2, px))
+            edge_y = max(y - reg_h/2, min(y + reg_h/2, py))
+            # If inside, push to nearest edge
+            if x - reg_w/2 < px < x + reg_w/2 and y - reg_h/2 < py < y + reg_h/2:
+                # Point is inside - find nearest edge
+                to_left = px - (x - reg_w/2)
+                to_right = (x + reg_w/2) - px
+                to_top = py - (y - reg_h/2)
+                to_bot = (y + reg_h/2) - py
+                min_dist = min(to_left, to_right, to_top, to_bot)
+                if min_dist == to_left:
+                    edge_x = x - reg_w/2
+                elif min_dist == to_right:
+                    edge_x = x + reg_w/2
+                elif min_dist == to_top:
+                    edge_y = y - reg_h/2
+                else:
+                    edge_y = y + reg_h/2
+            else:
+                # Point is outside - determine which edge to connect from
+                if px <= x - reg_w/2:
+                    edge_x = x - reg_w/2
+                    edge_y = max(y - reg_h/2, min(y + reg_h/2, py))
+                elif px >= x + reg_w/2:
+                    edge_x = x + reg_w/2
+                    edge_y = max(y - reg_h/2, min(y + reg_h/2, py))
+                elif py <= y - reg_h/2:
+                    edge_y = y - reg_h/2
+                    edge_x = max(x - reg_w/2, min(x + reg_w/2, px))
+                else:
+                    edge_y = y + reg_h/2
+                    edge_x = max(x - reg_w/2, min(x + reg_w/2, px))
+            ax.plot([edge_x, px], [edge_y, py], 'k-', linewidth=1.5, zorder=2)
+
+        # Labels
+        ax.annotate(comp.ref, (x, y - reg_h/2 - 1), fontsize=6, fontweight='bold',
+                    ha='center', va='bottom', zorder=5)
+        ax.annotate(comp.value, (x, y), fontsize=4,
+                    ha='center', va='center', zorder=5, color='gray')
     else:
         # Generic IC/component box - use stored width/height
         # Small padding so box edges align with trace connections
@@ -335,11 +564,11 @@ def draw_tokn_component(ax, comp):
         )
         ax.add_patch(rect)
 
-        # Labels above and below the box
-        ax.annotate(comp.ref, (x, rect_y - 2), fontsize=8, fontweight='bold',
+        # Reference above the box, value centered inside the box
+        ax.annotate(comp.ref, (x, rect_y - 1), fontsize=7, fontweight='bold',
                     ha='center', va='bottom', zorder=5)
-        ax.annotate(comp.value, (x, rect_y + height + 2), fontsize=7,
-                    ha='center', va='top', zorder=5, color='gray')
+        ax.annotate(comp.value, (x, y), fontsize=6,
+                    ha='center', va='center', zorder=5, color='gray')
 
 
 # Use cl100k_base encoding (used by GPT-4, Claude, etc.)

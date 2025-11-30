@@ -282,8 +282,13 @@ def parse_component(expr: SExpr, lib_symbols: dict[str, LibSymbol]) -> Optional[
     )
 
     # Calculate absolute pin positions
-    if lib_id in lib_symbols:
-        lib_sym = lib_symbols[lib_id]
+    # Try lib_name first (for renamed symbols), then fall back to lib_id
+    lib_name_expr = get(expr, 'lib_name')
+    lib_name = lib_name_expr[1] if lib_name_expr and len(lib_name_expr) > 1 else None
+
+    lookup_key = lib_name if lib_name and lib_name in lib_symbols else lib_id
+    if lookup_key in lib_symbols:
+        lib_sym = lib_symbols[lookup_key]
         for pin in lib_sym.pins:
             abs_pos = transform_pin(pin.x, pin.y, x, y, angle, mirror)
             comp.pins[pin.number] = abs_pos
