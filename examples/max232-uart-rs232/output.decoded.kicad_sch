@@ -72,82 +72,82 @@
           (stroke (width 0.254) (type default))
           (fill (type background)))
         (pin passive line
-          (at 0.0 -30.480000000000004 90)
+          (at 0.0 30.480000000000004 270)
           (length 2.54)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "16" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at 0.0 30.480000000000004 270)
+          (at 0.0 -30.480000000000004 90)
           (length 2.54)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "15" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at 20.319999999999993 12.700000000000003 180)
+          (at 20.319999999999993 -12.700000000000003 180)
           (length 5.079999999999993)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "13" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at 20.319999999999993 2.5400000000000063 180)
+          (at 20.319999999999993 -2.5400000000000063 180)
           (length 5.079999999999993)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "14" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at 20.319999999999993 17.78 180)
+          (at 20.319999999999993 -17.78 180)
           (length 5.079999999999993)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "8" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at 20.319999999999993 7.6200000000000045 180)
+          (at 20.319999999999993 -7.6200000000000045 180)
           (length 5.079999999999993)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "7" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at -20.320000000000007 12.700000000000003 0)
+          (at -20.320000000000007 -12.700000000000003 0)
           (length 5.080000000000007)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "12" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at -20.320000000000007 2.5400000000000063 0)
+          (at -20.320000000000007 -2.5400000000000063 0)
           (length 5.080000000000007)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "11" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at -20.320000000000007 17.78 0)
+          (at -20.320000000000007 -17.78 0)
           (length 5.080000000000007)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "9" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at -20.320000000000007 7.6200000000000045 0)
+          (at -20.320000000000007 -7.6200000000000045 0)
           (length 5.080000000000007)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "10" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at -20.320000000000007 -22.86 0)
+          (at -20.320000000000007 22.86 0)
           (length 5.080000000000007)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "1" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at 20.319999999999993 -10.159999999999997 180)
+          (at 20.319999999999993 10.159999999999997 180)
           (length 5.079999999999993)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "2" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at 20.319999999999993 -2.539999999999992 180)
+          (at 20.319999999999993 2.539999999999992 180)
           (length 5.079999999999993)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "6" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at 20.319999999999993 -15.239999999999995 180)
+          (at 20.319999999999993 15.239999999999995 180)
           (length 5.079999999999993)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "5" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at 20.319999999999993 -22.86 180)
+          (at 20.319999999999993 22.86 180)
           (length 5.079999999999993)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "4" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at -20.320000000000007 -15.239999999999995 0)
+          (at -20.320000000000007 15.239999999999995 0)
           (length 5.080000000000007)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "3" (effects (font (size 1.27 1.27)))))
@@ -510,7 +510,7 @@
     (property "Value" "10uf"
       (at 111.76 86.28 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" ""
+    (property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
       (at 111.76 81.28 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"
@@ -543,7 +543,7 @@
     (property "Value" "10uf"
       (at 130.81 65.96000000000001 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" ""
+    (property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
       (at 130.81 60.96 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"
@@ -576,7 +576,7 @@
     (property "Value" "10uf"
       (at 173.99 86.28 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" ""
+    (property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
       (at 173.99 81.28 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"
@@ -609,7 +609,7 @@
     (property "Value" "10uf"
       (at 186.69 95.17 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" ""
+    (property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
       (at 186.69 90.17 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"
@@ -642,7 +642,7 @@
     (property "Value" "10uf"
       (at 176.53 102.79 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" ""
+    (property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
       (at 176.53 97.79 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"
@@ -675,7 +675,7 @@
     (property "Value" "MAX232"
       (at 144.78 105.33 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" ""
+    (property "Footprint" "Package_SO:SOIC-16_3.9x9.9mm_P1.27mm"
       (at 144.78 100.33 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"

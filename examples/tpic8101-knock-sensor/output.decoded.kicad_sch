@@ -72,87 +72,87 @@
           (stroke (width 0.254) (type default))
           (fill (type background)))
         (pin passive line
-          (at -17.779999999999987 -19.049999999999997 0)
+          (at -17.779999999999987 19.049999999999997 0)
           (length 5.079999999999986)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "1" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at 17.78 19.049999999999997 180)
+          (at 17.78 -19.049999999999997 180)
           (length 5.08)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "2" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at 17.78 -19.049999999999997 180)
+          (at 17.78 19.049999999999997 180)
           (length 5.08)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "4" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at 17.78 3.8100000000000023 180)
+          (at 17.78 -3.8100000000000023 180)
           (length 5.08)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "7" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at 17.78 0.0 180)
+          (at 17.78 -0.0 180)
           (length 5.08)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "14" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at 17.78 -3.8100000000000023 180)
+          (at 17.78 3.8100000000000023 180)
           (length 5.08)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "8" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at 17.78 -7.6200000000000045 180)
+          (at 17.78 7.6200000000000045 180)
           (length 5.08)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "11" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at 17.78 -11.430000000000007 180)
+          (at 17.78 11.430000000000007 180)
           (length 5.08)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "12" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at 17.78 -15.239999999999995 180)
+          (at 17.78 15.239999999999995 180)
           (length 5.08)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "13" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at -17.779999999999987 2.5400000000000063 0)
+          (at -17.779999999999987 -2.5400000000000063 0)
           (length 5.079999999999986)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "3" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at -17.779999999999987 2.5400000000000063 0)
+          (at -17.779999999999987 -2.5400000000000063 0)
           (length 5.079999999999986)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "15" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at -17.779999999999987 2.5400000000000063 0)
+          (at -17.779999999999987 -2.5400000000000063 0)
           (length 5.079999999999986)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "20" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at -17.779999999999987 7.6200000000000045 0)
+          (at -17.779999999999987 -7.6200000000000045 0)
           (length 5.079999999999986)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "17" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at -17.779999999999987 5.079999999999998 0)
+          (at -17.779999999999987 -5.079999999999998 0)
           (length 5.079999999999986)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "16" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at -17.779999999999987 -11.430000000000007 0)
+          (at -17.779999999999987 11.430000000000007 0)
           (length 5.079999999999986)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "19" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at 17.78 7.6200000000000045 180)
+          (at 17.78 -7.6200000000000045 180)
           (length 5.08)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "9" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at -17.779999999999987 -13.969999999999999 0)
+          (at -17.779999999999987 13.969999999999999 0)
           (length 5.079999999999986)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "18" (effects (font (size 1.27 1.27)))))
@@ -217,17 +217,17 @@
           (stroke (width 0.254) (type default))
           (fill (type background)))
         (pin passive line
-          (at -15.239999999999995 -1.2700000000000102 0)
+          (at -15.239999999999995 1.2700000000000102 0)
           (length 5.079999999999995)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "4" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at 15.240000000000009 1.2700000000000102 180)
+          (at 15.240000000000009 -1.2700000000000102 180)
           (length 5.080000000000009)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "2" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at 15.240000000000009 -1.2700000000000102 180)
+          (at 15.240000000000009 1.2700000000000102 180)
           (length 5.080000000000009)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "3" (effects (font (size 1.27 1.27)))))
@@ -1195,7 +1195,7 @@
     (property "Value" "0.1u"
       (at 91.44 55.8 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" ""
+    (property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
       (at 91.44 50.8 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"
@@ -1228,7 +1228,7 @@
     (property "Value" "47u"
       (at 78.74 55.8 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" ""
+    (property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
       (at 78.74 50.8 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"
@@ -1261,7 +1261,7 @@
     (property "Value" "3.3n"
       (at 69.85 88.82 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" ""
+    (property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
       (at 69.85 83.82 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"
@@ -1294,7 +1294,7 @@
     (property "Value" "3.3n"
       (at 69.85 105.33 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" ""
+    (property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
       (at 69.85 100.33 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"
@@ -1327,7 +1327,7 @@
     (property "Value" "100n"
       (at 99.06 98.98 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" ""
+    (property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
       (at 99.06 93.98 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"
@@ -1360,7 +1360,7 @@
     (property "Value" "100n"
       (at 114.3 140.89 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" ""
+    (property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
       (at 114.3 135.89 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"
@@ -1393,7 +1393,7 @@
     (property "Value" "15p"
       (at 166.37 139.62 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" ""
+    (property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
       (at 166.37 134.62 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"
@@ -1426,7 +1426,7 @@
     (property "Value" "100n"
       (at 213.36 121.84 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" ""
+    (property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
       (at 213.36 116.84 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"
@@ -1459,7 +1459,7 @@
     (property "Value" "TPIC8101DWRG4"
       (at 135.89 100.25 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" "SOIC-127"
+    (property "Footprint" "Package_SO:SOIC-20W_7.5x12.8mm_P1.27mm"
       (at 135.89 95.25 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"
@@ -1537,7 +1537,7 @@
     (property "Value" "100k"
       (at 100.33 86.28 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" "0603"
+    (property "Footprint" "Resistor_SMD:R_0603_1608Metric"
       (at 100.33 81.28 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"
@@ -1570,7 +1570,7 @@
     (property "Value" "100k"
       (at 85.09 88.82 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" "0603"
+    (property "Footprint" "Resistor_SMD:R_0603_1608Metric"
       (at 85.09 83.82 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"
@@ -1603,7 +1603,7 @@
     (property "Value" "100k"
       (at 85.09 105.33 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" "0603"
+    (property "Footprint" "Resistor_SMD:R_0603_1608Metric"
       (at 85.09 100.33 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"
@@ -1636,7 +1636,7 @@
     (property "Value" "100k"
       (at 99.06 107.87 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" "0603"
+    (property "Footprint" "Resistor_SMD:R_0603_1608Metric"
       (at 99.06 102.87 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"
@@ -1669,7 +1669,7 @@
     (property "Value" "100k"
       (at 179.07 112.95 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" "0603"
+    (property "Footprint" "Resistor_SMD:R_0603_1608Metric"
       (at 179.07 107.95 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"
@@ -1702,7 +1702,7 @@
     (property "Value" "100k"
       (at 185.42 112.95 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" "0603"
+    (property "Footprint" "Resistor_SMD:R_0603_1608Metric"
       (at 185.42 107.95 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"
@@ -1735,7 +1735,7 @@
     (property "Value" "100k"
       (at 191.77 112.95 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" "0603"
+    (property "Footprint" "Resistor_SMD:R_0603_1608Metric"
       (at 191.77 107.95 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"
@@ -1768,7 +1768,7 @@
     (property "Value" "100k"
       (at 198.12 112.95 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" "0603"
+    (property "Footprint" "Resistor_SMD:R_0603_1608Metric"
       (at 198.12 107.95 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"
@@ -1801,7 +1801,7 @@
     (property "Value" "100k"
       (at 204.47 112.95 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" "0603"
+    (property "Footprint" "Resistor_SMD:R_0603_1608Metric"
       (at 204.47 107.95 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"
@@ -1834,7 +1834,7 @@
     (property "Value" "100k"
       (at 210.82 112.95 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" "0603"
+    (property "Footprint" "Resistor_SMD:R_0603_1608Metric"
       (at 210.82 107.95 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"
@@ -1867,7 +1867,7 @@
     (property "Value" "100k"
       (at 172.72 112.95 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" "0603"
+    (property "Footprint" "Resistor_SMD:R_0603_1608Metric"
       (at 172.72 107.95 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"
@@ -1900,7 +1900,7 @@
     (property "Value" "S35010-4.000-A-X1-R"
       (at 137.16 135.81 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" "S350104000AX1R"
+    (property "Footprint" ""
       (at 137.16 130.81 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"

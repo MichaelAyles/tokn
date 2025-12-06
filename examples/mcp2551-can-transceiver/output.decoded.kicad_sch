@@ -108,42 +108,42 @@
           (stroke (width 0.254) (type default))
           (fill (type background)))
         (pin passive line
-          (at 0.0 -10.159999999999997 270)
-          (length 20.319999999999997)
-          (name "~" (effects (font (size 1.27 1.27))))
-          (number "3" (effects (font (size 1.27 1.27)))))
-        (pin passive line
           (at 0.0 10.159999999999997 270)
           (length 2.54)
           (name "~" (effects (font (size 1.27 1.27))))
+          (number "3" (effects (font (size 1.27 1.27)))))
+        (pin passive line
+          (at 0.0 -10.159999999999997 270)
+          (length 20.319999999999997)
+          (name "~" (effects (font (size 1.27 1.27))))
           (number "2" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at 12.699999999999989 -2.5400000000000063 180)
+          (at 12.699999999999989 2.5400000000000063 180)
           (length 5.079999999999989)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "7" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at 12.699999999999989 2.539999999999992 180)
+          (at 12.699999999999989 -2.539999999999992 180)
           (length 5.079999999999989)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "6" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at -12.700000000000017 -2.5400000000000063 0)
+          (at -12.700000000000017 2.5400000000000063 0)
           (length 5.080000000000018)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "4" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at -12.700000000000017 -5.079999999999998 0)
+          (at -12.700000000000017 5.079999999999998 0)
           (length 5.080000000000018)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "1" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at -12.700000000000017 2.539999999999992 0)
+          (at -12.700000000000017 -2.539999999999992 0)
           (length 5.080000000000018)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "5" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at -12.700000000000017 5.079999999999998 0)
+          (at -12.700000000000017 -5.079999999999998 0)
           (length 5.080000000000018)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "8" (effects (font (size 1.27 1.27)))))
@@ -477,7 +477,7 @@
     (property "Value" "30pf"
       (at 123.19 106.6 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" ""
+    (property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
       (at 123.19 101.6 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"
@@ -510,7 +510,7 @@
     (property "Value" "0.1uf"
       (at 128.27 69.77 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" ""
+    (property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
       (at 128.27 64.77 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"
@@ -543,7 +543,7 @@
     (property "Value" "1k"
       (at 134.62 106.6 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" ""
+    (property "Footprint" "Resistor_SMD:R_0603_1608Metric"
       (at 134.62 101.6 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"
@@ -576,7 +576,7 @@
     (property "Value" "60R"
       (at 172.72 90.09 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" ""
+    (property "Footprint" "Resistor_SMD:R_0603_1608Metric"
       (at 172.72 85.09 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"
@@ -609,7 +609,7 @@
     (property "Value" "MCP2551-I-SN"
       (at 149.86 90.09 0)
       (effects (font (size 1.27 1.27))))
-    (property "Footprint" "SOIC-8"
+    (property "Footprint" "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm"
       (at 149.86 85.09 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~"

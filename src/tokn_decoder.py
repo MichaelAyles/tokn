@@ -6,12 +6,104 @@ Design:
 - Creates generic rectangular symbols with proper pins for ICs
 - Pin positions inferred from wire endpoints in TOKN
 - Deterministic output (same TOKN = same KiCad)
+- Footprints auto-populated from lookup table (footprints.json)
 """
 
 import hashlib
+import json
 from collections import defaultdict
+from pathlib import Path
 
 from tokn_parser import ToknSchematic, ToknWire, parse_tokn_file
+
+
+# Load footprint lookup table
+_footprint_data = None
+
+def _load_footprints() -> dict:
+    """Load footprint lookup from JSON file."""
+    global _footprint_data
+    if _footprint_data is None:
+        fp_path = Path(__file__).parent / 'footprints.json'
+        if fp_path.exists():
+            with open(fp_path, 'r') as f:
+                _footprint_data = json.load(f)
+        else:
+            _footprint_data = {'passives': {}, 'packages': {}, 'parts': {}}
+    return _footprint_data
+
+
+def lookup_footprint(comp_type: str, value: str, footprint_hint: str) -> str:
+    """
+    Look up footprint for a component.
+
+    Priority:
+    1. Explicit footprint from TOKN (if present and full path)
+    2. Package hint from TOKN (e.g., SOIC-8) -> expand to full path
+    3. Part number match (e.g., MCP2551)
+    4. Passive type match (R, C, L)
+    5. Empty string if not found
+    """
+    data = _load_footprints()
+
+    # 1. If footprint_hint is already a full KiCad path, use it
+    if footprint_hint and ':' in footprint_hint:
+        return footprint_hint
+
+    # 2. If footprint_hint is a package shorthand (e.g., SOIC-8), expand it
+    if footprint_hint and footprint_hint in data.get('packages', {}):
+        pkg = data['packages'][footprint_hint]
+        # If it's a size suffix (starts with _), build full path for passives
+        if pkg.startswith('_') and comp_type in ('R', 'C', 'L', 'D', 'LED', 'F', 'FB'):
+            if comp_type == 'R':
+                return f'Resistor_SMD:R{pkg}'
+            elif comp_type == 'C':
+                return f'Capacitor_SMD:C{pkg}'
+            elif comp_type == 'L' or comp_type == 'FB':
+                return f'Inductor_SMD:L{pkg}'
+            elif comp_type == 'D':
+                return f'Diode_SMD:D{pkg}'
+            elif comp_type == 'LED':
+                return f'LED_SMD:LED{pkg}'
+            elif comp_type == 'F':
+                return f'Fuse:Fuse{pkg}'
+        return pkg
+
+    # 3. Try to match part number (check type, value, and common prefixes)
+    parts = data.get('parts', {})
+
+    # Direct match on comp_type
+    if comp_type in parts:
+        return parts[comp_type]
+
+    # Match on value (sometimes value contains part number)
+    if value in parts:
+        return parts[value]
+
+    # Try matching prefix of comp_type (e.g., MCP2551-I-SN -> MCP2551)
+    for part_key in parts:
+        if comp_type.startswith(part_key) or value.startswith(part_key):
+            return parts[part_key]
+
+    # 4. Passive type match
+    passives = data.get('passives', {})
+    if comp_type in passives:
+        return passives[comp_type]
+
+    # 5. If footprint_hint looks like a size code for passives, use it
+    if footprint_hint and comp_type in ('R', 'C', 'L'):
+        packages = data.get('packages', {})
+        if footprint_hint in packages:
+            # Get the suffix (e.g., _0603_1608Metric)
+            suffix = packages[footprint_hint]
+            if comp_type == 'R':
+                return f'Resistor_SMD:R{suffix}'
+            elif comp_type == 'C':
+                return f'Capacitor_SMD:C{suffix}'
+            elif comp_type == 'L':
+                return f'Inductor_SMD:L{suffix}'
+
+    return ''
 
 
 def make_uuid(seed: str) -> str:
@@ -259,7 +351,8 @@ def decode_schematic(sch: ToknSchematic) -> str:
         lines.append(f'    (property "Value" "{esc(comp.value)}"')
         lines.append(f'      (at {comp.x} {comp.y + 5} 0)')
         lines.append('      (effects (font (size 1.27 1.27))))')
-        lines.append(f'    (property "Footprint" "{esc(comp.footprint)}"')
+        footprint = lookup_footprint(comp.type, comp.value, comp.footprint)
+        lines.append(f'    (property "Footprint" "{esc(footprint)}"')
         lines.append(f'      (at {comp.x} {comp.y} 0)')
         lines.append('      (effects (font (size 1.27 1.27)) (hide yes)))')
         lines.append('    (property "Datasheet" "~"')
@@ -486,7 +579,10 @@ def emit_generic_symbol(comp_type: str, width: float, height: float, pins: list[
     lines.append('          (fill (type background)))')
 
     # Emit pins at their actual positions
+    # Note: Schematic uses Y-down, but lib_symbols use Y-up, so flip rel_y
     for pin_num, (rel_x, rel_y) in seen_pins.items():
+        rel_y = -rel_y  # Flip Y for lib_symbol coordinate system
+
         # Determine pin direction based on position relative to rectangle
         if rel_x < -half_w + 5.08:
             # Pin on left side
