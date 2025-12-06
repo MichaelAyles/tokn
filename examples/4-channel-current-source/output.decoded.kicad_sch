@@ -72,55 +72,85 @@
           (stroke (width 0.254) (type default))
           (fill (type background)))
         (pin passive line
-          (at 12.699999999999989 -8.890000000000008 180)
-          (length 5.079999999999989)
-          (name "~" (effects (font (size 1.27 1.27))))
-          (number "9" (effects (font (size 1.27 1.27)))))
-        (pin passive line
-          (at -12.700000000000017 -8.890000000000008 0)
-          (length 5.080000000000018)
-          (name "~" (effects (font (size 1.27 1.27))))
-          (number "8" (effects (font (size 1.27 1.27)))))
-        (pin passive line
-          (at 12.699999999999989 8.889999999999993 180)
-          (length 5.079999999999989)
-          (name "~" (effects (font (size 1.27 1.27))))
-          (number "16" (effects (font (size 1.27 1.27)))))
-        (pin passive line
-          (at 12.699999999999989 6.349999999999994 180)
-          (length 5.079999999999989)
-          (name "~" (effects (font (size 1.27 1.27))))
-          (number "15" (effects (font (size 1.27 1.27)))))
-        (pin passive line
-          (at 12.699999999999989 3.809999999999995 180)
-          (length 5.079999999999989)
-          (name "~" (effects (font (size 1.27 1.27))))
-          (number "14" (effects (font (size 1.27 1.27)))))
-        (pin passive line
-          (at 12.699999999999989 1.269999999999996 180)
-          (length 5.079999999999989)
-          (name "~" (effects (font (size 1.27 1.27))))
-          (number "13" (effects (font (size 1.27 1.27)))))
-        (pin passive line
-          (at -12.700000000000017 8.889999999999993 0)
-          (length 5.080000000000018)
-          (name "~" (effects (font (size 1.27 1.27))))
+          (at -12.7 6.3500000000000005 0)
+          (length 5.08)
+          (name "1B" (effects (font (size 1.27 1.27))))
           (number "1" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at -12.700000000000017 6.349999999999994 0)
-          (length 5.080000000000018)
-          (name "~" (effects (font (size 1.27 1.27))))
+          (at -12.7 4.5357142857142865 0)
+          (length 5.08)
+          (name "2B" (effects (font (size 1.27 1.27))))
           (number "2" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at -12.700000000000017 3.809999999999995 0)
-          (length 5.080000000000018)
-          (name "~" (effects (font (size 1.27 1.27))))
+          (at -12.7 2.7214285714285715 0)
+          (length 5.08)
+          (name "3B" (effects (font (size 1.27 1.27))))
           (number "3" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at -12.700000000000017 1.269999999999996 0)
-          (length 5.080000000000018)
-          (name "~" (effects (font (size 1.27 1.27))))
+          (at -12.7 0.9071428571428575 0)
+          (length 5.08)
+          (name "4B" (effects (font (size 1.27 1.27))))
           (number "4" (effects (font (size 1.27 1.27)))))
+        (pin passive line
+          (at -12.7 -0.9071428571428575 0)
+          (length 5.08)
+          (name "5B" (effects (font (size 1.27 1.27))))
+          (number "5" (effects (font (size 1.27 1.27)))))
+        (pin passive line
+          (at -12.7 -2.7214285714285724 0)
+          (length 5.08)
+          (name "6B" (effects (font (size 1.27 1.27))))
+          (number "6" (effects (font (size 1.27 1.27)))))
+        (pin passive line
+          (at -12.7 -4.535714285714286 0)
+          (length 5.08)
+          (name "7B" (effects (font (size 1.27 1.27))))
+          (number "7" (effects (font (size 1.27 1.27)))))
+        (pin passive line
+          (at -12.7 -6.3500000000000005 0)
+          (length 5.08)
+          (name "E" (effects (font (size 1.27 1.27))))
+          (number "8" (effects (font (size 1.27 1.27)))))
+        (pin passive line
+          (at 12.7 -6.3500000000000005 180)
+          (length 5.08)
+          (name "COM" (effects (font (size 1.27 1.27))))
+          (number "9" (effects (font (size 1.27 1.27)))))
+        (pin passive line
+          (at 12.7 -4.5357142857142865 180)
+          (length 5.08)
+          (name "7C" (effects (font (size 1.27 1.27))))
+          (number "10" (effects (font (size 1.27 1.27)))))
+        (pin passive line
+          (at 12.7 -2.7214285714285715 180)
+          (length 5.08)
+          (name "6C" (effects (font (size 1.27 1.27))))
+          (number "11" (effects (font (size 1.27 1.27)))))
+        (pin passive line
+          (at 12.7 -0.9071428571428575 180)
+          (length 5.08)
+          (name "5C" (effects (font (size 1.27 1.27))))
+          (number "12" (effects (font (size 1.27 1.27)))))
+        (pin passive line
+          (at 12.7 0.9071428571428575 180)
+          (length 5.08)
+          (name "4C" (effects (font (size 1.27 1.27))))
+          (number "13" (effects (font (size 1.27 1.27)))))
+        (pin passive line
+          (at 12.7 2.7214285714285724 180)
+          (length 5.08)
+          (name "3C" (effects (font (size 1.27 1.27))))
+          (number "14" (effects (font (size 1.27 1.27)))))
+        (pin passive line
+          (at 12.7 4.535714285714286 180)
+          (length 5.08)
+          (name "2C" (effects (font (size 1.27 1.27))))
+          (number "15" (effects (font (size 1.27 1.27)))))
+        (pin passive line
+          (at 12.7 6.3500000000000005 180)
+          (length 5.08)
+          (name "1C" (effects (font (size 1.27 1.27))))
+          (number "16" (effects (font (size 1.27 1.27)))))
       )
     )
     (symbol "tokn:NCV317MBSTT3G"
@@ -146,23 +176,23 @@
           (stroke (width 0.254) (type default))
           (fill (type background)))
         (pin passive line
-          (at -2.5400000000000063 -6.350000000000001 90)
-          (length 2.54)
+          (at -11.43 3.8099999999999996 0)
+          (length 5.08)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "1" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at -11.430000000000007 6.350000000000001 0)
-          (length 5.080000000000007)
-          (name "~" (effects (font (size 1.27 1.27))))
-          (number "3" (effects (font (size 1.27 1.27)))))
-        (pin passive line
-          (at 11.429999999999993 3.809999999999995 180)
-          (length 5.079999999999993)
+          (at -11.43 -3.8099999999999996 0)
+          (length 5.08)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "2" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at 11.429999999999993 3.809999999999995 180)
-          (length 5.079999999999993)
+          (at 11.43 -3.8099999999999996 180)
+          (length 5.08)
+          (name "~" (effects (font (size 1.27 1.27))))
+          (number "3" (effects (font (size 1.27 1.27)))))
+        (pin passive line
+          (at 11.43 3.8099999999999996 180)
+          (length 5.08)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "4" (effects (font (size 1.27 1.27)))))
       )
@@ -190,20 +220,20 @@
           (stroke (width 0.254) (type default))
           (fill (type background)))
         (pin passive line
-          (at 3.8100000000000023 5.080000000000002 180)
-          (length 5.080000000000002)
-          (name "~" (effects (font (size 1.27 1.27))))
-          (number "3" (effects (font (size 1.27 1.27)))))
-        (pin passive line
-          (at -3.8100000000000023 -0.0 0)
-          (length 5.080000000000002)
-          (name "~" (effects (font (size 1.27 1.27))))
+          (at -3.81 2.54 0)
+          (length 5.08)
+          (name "G" (effects (font (size 1.27 1.27))))
           (number "1" (effects (font (size 1.27 1.27)))))
         (pin passive line
-          (at 3.8100000000000023 -5.079999999999998 180)
-          (length 5.080000000000002)
-          (name "~" (effects (font (size 1.27 1.27))))
+          (at -3.81 -2.54 0)
+          (length 5.08)
+          (name "S" (effects (font (size 1.27 1.27))))
           (number "2" (effects (font (size 1.27 1.27)))))
+        (pin passive line
+          (at 3.81 -2.54 180)
+          (length 5.08)
+          (name "D" (effects (font (size 1.27 1.27))))
+          (number "3" (effects (font (size 1.27 1.27)))))
       )
     )
     (symbol "Device:R"
@@ -242,37 +272,6 @@
           (name "~" (effects (font (size 1.27 1.27))))
           (number "2" (effects (font (size 1.27 1.27))))))
     )
-    (symbol "power:GND"
-      (power)
-      (pin_numbers (hide yes))
-      (pin_names (offset 0) (hide yes))
-      (exclude_from_sim no)
-      (in_bom yes)
-      (on_board yes)
-      (property "Reference" "#PWR"
-        (at 0 -6.35 0)
-        (effects (font (size 1.27 1.27)) (hide yes)))
-      (property "Value" "GND"
-        (at 0 -3.81 0)
-        (effects (font (size 1.27 1.27))))
-      (property "Footprint" ""
-        (at 0 0 0)
-        (effects (font (size 1.27 1.27)) (hide yes)))
-      (property "Datasheet" ""
-        (at 0 0 0)
-        (effects (font (size 1.27 1.27)) (hide yes)))
-      (symbol "GND_0_1"
-        (polyline
-          (pts (xy 0 0) (xy 0 -1.27) (xy 1.27 -1.27) (xy 0 -2.54) (xy -1.27 -1.27) (xy 0 -1.27))
-          (stroke (width 0) (type default))
-          (fill (type none))))
-      (symbol "GND_1_1"
-        (pin power_in line
-          (at 0 0 270)
-          (length 0)
-          (name "~" (effects (font (size 1.27 1.27))))
-          (number "1" (effects (font (size 1.27 1.27))))))
-    )
     (symbol "power:+12V"
       (power)
       (pin_numbers (hide yes))
@@ -308,6 +307,37 @@
       (symbol "+12V_1_1"
         (pin power_in line
           (at 0 0 90)
+          (length 0)
+          (name "~" (effects (font (size 1.27 1.27))))
+          (number "1" (effects (font (size 1.27 1.27))))))
+    )
+    (symbol "power:GND"
+      (power)
+      (pin_numbers (hide yes))
+      (pin_names (offset 0) (hide yes))
+      (exclude_from_sim no)
+      (in_bom yes)
+      (on_board yes)
+      (property "Reference" "#PWR"
+        (at 0 -6.35 0)
+        (effects (font (size 1.27 1.27)) (hide yes)))
+      (property "Value" "GND"
+        (at 0 -3.81 0)
+        (effects (font (size 1.27 1.27))))
+      (property "Footprint" ""
+        (at 0 0 0)
+        (effects (font (size 1.27 1.27)) (hide yes)))
+      (property "Datasheet" ""
+        (at 0 0 0)
+        (effects (font (size 1.27 1.27)) (hide yes)))
+      (symbol "GND_0_1"
+        (polyline
+          (pts (xy 0 0) (xy 0 -1.27) (xy 1.27 -1.27) (xy 0 -2.54) (xy -1.27 -1.27) (xy 0 -1.27))
+          (stroke (width 0) (type default))
+          (fill (type none))))
+      (symbol "GND_1_1"
+        (pin power_in line
+          (at 0 0 270)
           (length 0)
           (name "~" (effects (font (size 1.27 1.27))))
           (number "1" (effects (font (size 1.27 1.27))))))
@@ -1319,24 +1349,6 @@
     (property "Datasheet" "~"
       (at 209.55 62.23 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
-    (pin "9"
-      (uuid "c3bef66a-b96e-84b8-d209-97da10714ff1")
-    )
-    (pin "8"
-      (uuid "1b346c83-43ae-3c4f-7f21-c106ec7cbfb6")
-    )
-    (pin "16"
-      (uuid "9d48eec4-fa78-0822-1842-6369f7135821")
-    )
-    (pin "15"
-      (uuid "545a81eb-e854-92d7-531e-7cb3adb6a141")
-    )
-    (pin "14"
-      (uuid "b9ddf7e3-a187-1d58-10ee-e67416c3c3ab")
-    )
-    (pin "13"
-      (uuid "2e7c263e-8529-a852-c959-9c6a5bdfa656")
-    )
     (pin "1"
       (uuid "977fa148-b715-f25c-50e3-eb7702d9769b")
     )
@@ -1348,6 +1360,42 @@
     )
     (pin "4"
       (uuid "b0e9cc56-fff7-36cb-cae3-b9e0c13573c4")
+    )
+    (pin "5"
+      (uuid "4885ce82-e012-82a3-48db-39f83e69aa6a")
+    )
+    (pin "6"
+      (uuid "981b1499-5df7-cf23-30b2-7472bae0e05f")
+    )
+    (pin "7"
+      (uuid "ed5a6d30-8e3e-999a-ab38-d0e2d621fd3e")
+    )
+    (pin "8"
+      (uuid "1b346c83-43ae-3c4f-7f21-c106ec7cbfb6")
+    )
+    (pin "9"
+      (uuid "c3bef66a-b96e-84b8-d209-97da10714ff1")
+    )
+    (pin "10"
+      (uuid "63fdcd03-dc72-bf5f-4af5-eba86d9efb6b")
+    )
+    (pin "11"
+      (uuid "65eabe16-d6f2-15bb-4be9-1092d7432ba3")
+    )
+    (pin "12"
+      (uuid "1360a9f9-ca62-28b9-4503-ba1348f154f9")
+    )
+    (pin "13"
+      (uuid "2e7c263e-8529-a852-c959-9c6a5bdfa656")
+    )
+    (pin "14"
+      (uuid "b9ddf7e3-a187-1d58-10ee-e67416c3c3ab")
+    )
+    (pin "15"
+      (uuid "545a81eb-e854-92d7-531e-7cb3adb6a141")
+    )
+    (pin "16"
+      (uuid "9d48eec4-fa78-0822-1842-6369f7135821")
     )
     (instances
       (project ""
@@ -1532,14 +1580,14 @@
     (property "Datasheet" "~"
       (at 71.12 35.56 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
-    (pin "3"
-      (uuid "42a16549-5166-2f32-a3ac-226e61be8b42")
-    )
     (pin "1"
       (uuid "12667ab2-5c65-117f-7bdd-951f6a889794")
     )
     (pin "2"
       (uuid "4a96bc2e-36d0-74a0-ed53-cd66e4cb2a8f")
+    )
+    (pin "3"
+      (uuid "42a16549-5166-2f32-a3ac-226e61be8b42")
     )
     (instances
       (project ""
@@ -1568,14 +1616,14 @@
     (property "Datasheet" "~"
       (at 71.12 81.28 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
-    (pin "3"
-      (uuid "0053c57c-1cc0-08bf-1184-fba511da6605")
+    (pin "1"
+      (uuid "3c5ba3d6-a319-bab2-9659-32358c752088")
     )
     (pin "2"
       (uuid "33b8d1ea-50c2-5cdb-0af2-f1c269042133")
     )
-    (pin "1"
-      (uuid "3c5ba3d6-a319-bab2-9659-32358c752088")
+    (pin "3"
+      (uuid "0053c57c-1cc0-08bf-1184-fba511da6605")
     )
     (instances
       (project ""
@@ -1604,14 +1652,14 @@
     (property "Datasheet" "~"
       (at 71.12 127.0 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
-    (pin "3"
-      (uuid "99e4df3c-1fe9-511f-a9de-96a18c9bf515")
+    (pin "1"
+      (uuid "61787037-b87d-8dcb-7151-3ae6eaeaff8e")
     )
     (pin "2"
       (uuid "808c8274-50d6-8ca1-7c09-16692c35d47c")
     )
-    (pin "1"
-      (uuid "61787037-b87d-8dcb-7151-3ae6eaeaff8e")
+    (pin "3"
+      (uuid "99e4df3c-1fe9-511f-a9de-96a18c9bf515")
     )
     (instances
       (project ""
@@ -1640,14 +1688,14 @@
     (property "Datasheet" "~"
       (at 71.12 172.72 0)
       (effects (font (size 1.27 1.27)) (hide yes)))
-    (pin "3"
-      (uuid "852253b8-deb9-4e26-5002-cbec49672871")
-    )
     (pin "1"
       (uuid "43253d71-686a-bfad-165e-4b7d89d10c15")
     )
     (pin "2"
       (uuid "060c9a76-b138-1984-f1a5-a8d9d5197fc7")
+    )
+    (pin "3"
+      (uuid "852253b8-deb9-4e26-5002-cbec49672871")
     )
     (instances
       (project ""

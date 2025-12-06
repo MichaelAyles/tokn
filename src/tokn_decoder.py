@@ -265,14 +265,23 @@ def decode_schematic(sch: ToknSchematic) -> str:
         elif comp.type == 'C':
             lines.extend(emit_capacitor_symbol())
         else:
-            # Generic IC - need to collect all pins from all instances of this type
-            all_pins = []
+            # Generic IC - get pin definitions from TOKN pins section
+            pin_defs = []
+            # Find a component of this type that has pin definitions
             for c in sch.components:
-                if c.type == comp.type:
-                    pins = comp_pins.get(c.ref, [])
-                    for pin_num, rel_x, rel_y in pins:
-                        all_pins.append((pin_num, rel_x, rel_y))
-            lines.extend(emit_generic_symbol(comp.type, comp.w, comp.h, all_pins))
+                if c.type == comp.type and c.ref in sch.pins:
+                    pin_defs = [(p.num, p.name) for p in sch.pins[c.ref]]
+                    break
+            # If no pin defs in TOKN, fall back to pins from nets
+            if not pin_defs:
+                seen = set()
+                for c in sch.components:
+                    if c.type == comp.type:
+                        for pin_num, _, _ in comp_pins.get(c.ref, []):
+                            if pin_num not in seen:
+                                pin_defs.append((pin_num, '~'))
+                                seen.add(pin_num)
+            lines.extend(emit_generic_symbol(comp.type, comp.w, comp.h, pin_defs))
 
     # Power symbols
     power_types = set(p[0] for p in power_symbols)
@@ -334,7 +343,12 @@ def decode_schematic(sch: ToknSchematic) -> str:
     # Component instances
     for i, comp in enumerate(sch.components):
         lib_id = get_lib_id(comp.type)
-        pins = comp_pins.get(comp.ref, [])
+
+        # Get pin list from TOKN pins section or fall back to comp_pins
+        if comp.ref in sch.pins:
+            pin_nums = [p.num for p in sch.pins[comp.ref]]
+        else:
+            pin_nums = [pin_num for pin_num, _, _ in comp_pins.get(comp.ref, [])]
 
         lines.append('  (symbol')
         lines.append(f'    (lib_id "{lib_id}")')
@@ -360,7 +374,7 @@ def decode_schematic(sch: ToknSchematic) -> str:
         lines.append('      (effects (font (size 1.27 1.27)) (hide yes)))')
 
         # Pin UUIDs
-        for pin_num, _, _ in pins:
+        for pin_num in pin_nums:
             lines.append(f'    (pin "{pin_num}"')
             lines.append(f'      (uuid "{make_uuid(f"pin_{comp.ref}_{pin_num}")}")')
             lines.append('    )')
@@ -523,30 +537,53 @@ def emit_capacitor_symbol() -> list[str]:
     ]
 
 
-def emit_generic_symbol(comp_type: str, width: float, height: float, pins: list[tuple[str, float, float]]) -> list[str]:
-    """Emit generic rectangular symbol with pins at actual positions."""
+def emit_generic_symbol(comp_type: str, width: float, height: float, pin_defs: list[tuple[str, str]]) -> list[str]:
+    """Emit generic rectangular symbol with pins in standard IC layout.
+
+    Args:
+        comp_type: Component type (e.g., MAX232)
+        width: Component width (pin spread horizontal)
+        height: Component height (pin spread vertical)
+        pin_defs: List of (pin_num, pin_name) from TOKN pins section
+    """
     lines = []
 
-    # Use TOKN w/h or calculate from pin positions
+    # Sort pins by number
+    sorted_pins = sorted(pin_defs, key=lambda p: int(p[0]) if p[0].isdigit() else 0)
+    num_pins = len(sorted_pins)
+
+    # Use TOKN dimensions or defaults
     if width > 0 and height > 0:
         half_w = width / 2
         half_h = height / 2
     else:
-        # Calculate bounding box from pins
-        if pins:
-            xs = [rel_x for _, rel_x, _ in pins]
-            ys = [rel_y for _, _, rel_y in pins]
-            half_w = max(abs(min(xs, default=0)), abs(max(xs, default=0))) + 2.54
-            half_h = max(abs(min(ys, default=0)), abs(max(ys, default=0))) + 2.54
-        else:
-            half_w = 5.08
-            half_h = 5.08
+        # Default size based on pin count
+        half_w = 10.16
+        half_h = max(num_pins * 1.27, 7.62)
 
-    # Deduplicate pins (same pin number from different instances)
-    seen_pins = {}
-    for pin_num, rel_x, rel_y in pins:
-        if pin_num not in seen_pins:
-            seen_pins[pin_num] = (rel_x, rel_y)
+    # Calculate pin positions using standard dual-inline IC layout
+    # Pins 1 to N/2 on left side (top to bottom)
+    # Pins N/2+1 to N on right side (bottom to top)
+    pin_positions = {}
+
+    if num_pins > 0:
+        pins_per_side = (num_pins + 1) // 2
+        pin_spacing = (half_h * 2 - 5.08) / max(pins_per_side - 1, 1) if pins_per_side > 1 else 0
+
+        for i, (pin_num, pin_name) in enumerate(sorted_pins):
+            pin_idx = int(pin_num) if pin_num.isdigit() else i + 1
+
+            if pin_idx <= pins_per_side:
+                # Left side: pin 1 at top, going down
+                rel_x = -half_w
+                rel_y = half_h - 2.54 - (pin_idx - 1) * pin_spacing
+            else:
+                # Right side: pin N/2+1 at bottom, going up
+                right_idx = pin_idx - pins_per_side
+                rel_x = half_w
+                rel_y = -half_h + 2.54 + (right_idx - 1) * pin_spacing
+
+            pin_positions[pin_num] = (rel_x, rel_y, pin_name)
 
     # Get reference prefix
     ref_prefix = 'U'
@@ -578,39 +615,25 @@ def emit_generic_symbol(comp_type: str, width: float, height: float, pins: list[
     lines.append('          (stroke (width 0.254) (type default))')
     lines.append('          (fill (type background)))')
 
-    # Emit pins at their actual positions
-    # Note: Schematic uses Y-down, but lib_symbols use Y-up, so flip rel_y
-    for pin_num, (rel_x, rel_y) in seen_pins.items():
-        rel_y = -rel_y  # Flip Y for lib_symbol coordinate system
-
-        # Determine pin direction based on position relative to rectangle
-        if rel_x < -half_w + 5.08:
-            # Pin on left side
-            direction = 0  # points right
-            pin_x = rel_x
-            length = (-half_w + 5.08) - rel_x
-        elif rel_x > half_w - 5.08:
-            # Pin on right side
-            direction = 180  # points left
-            pin_x = rel_x
-            length = rel_x - (half_w - 5.08)
-        elif rel_y < -half_h:
-            # Pin on bottom
-            direction = 90  # points up
-            pin_x = rel_x
-            length = (-half_h) - rel_y
+    # Emit pins at calculated positions
+    for pin_num, (rel_x, rel_y, pin_name) in pin_positions.items():
+        # Determine pin direction based on position
+        if rel_x < 0:
+            # Left side - pin points right
+            direction = 0
+            length = 5.08
         else:
-            # Pin on top
-            direction = 270  # points down
-            pin_x = rel_x
-            length = rel_y - half_h
+            # Right side - pin points left
+            direction = 180
+            length = 5.08
 
-        length = max(abs(length), 2.54)
+        # Use pin name if available, otherwise "~"
+        name_str = pin_name if pin_name and pin_name != '~' else '~'
 
         lines.append('        (pin passive line')
         lines.append(f'          (at {rel_x} {rel_y} {direction})')
         lines.append(f'          (length {length})')
-        lines.append(f'          (name "~" (effects (font (size 1.27 1.27))))')
+        lines.append(f'          (name "{esc(name_str)}" (effects (font (size 1.27 1.27))))')
         lines.append(f'          (number "{pin_num}" (effects (font (size 1.27 1.27)))))')
 
     lines.append('      )')
