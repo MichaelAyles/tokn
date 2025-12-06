@@ -33,3 +33,6 @@ htmlcov/
 # Claude Code
 CLAUDE.md
 .claude/
+
+# Testing
+testing/
