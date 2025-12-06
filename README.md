@@ -55,7 +55,7 @@ TOKN converts KiCad schematic files (`.kicad_sch`) into a token-efficient repres
 
 ## Format
 
-TOKN v1.1 includes three sections:
+TOKN v1.2 includes four sections:
 
 ```toon
 # TOKN v1
@@ -63,8 +63,15 @@ title: MAX9926 Dual VR Conditioner
 
 components[10]{ref,type,value,fp,x,y,w,h,a}:
   C66,C,1n,,160.02,73.66,0.00,7.62,0
-  IC16,MAX9926UAEE_V+,MAX9926UAEE_V+,SOP65P602X175-16N,129.54,88.90,38.10,17.78,0
+  IC16,MAX9926UAEE_V+,MAX9926UAEE_V+,SOP-16,129.54,88.90,38.10,17.78,0
   R75,R,10k,0603,168.91,67.31,7.62,0.00,90
+
+pins{IC16}[16]:
+  1,IN_THRS1
+  2,EXT1
+  3,BIAS1
+  ...
+  16,IN1+
 
 nets[12]{name,pins}:
   +5VD,"C68.1,C69.1,C70.1,IC16.14"
@@ -88,6 +95,10 @@ wires[45]{net,pts}:
 | `w,h` | Pin spread dimensions (mm) |
 | `a` | Rotation angle (0, 90, 180, 270) |
 
+### Pins Section
+
+The `pins{REF}[N]:` section lists all pins for ICs with their datasheet names. This helps LLMs understand pin functions (including unconnected pins) and handle multi-function pins like `PC6/~{RESET}`.
+
 ## Usage
 
 ### Convert KiCad to TOKN
@@ -102,7 +113,12 @@ python src/tokn_encoder.py schematic.kicad_sch output.tokn
 python src/tokn_decoder.py output.tokn output.kicad_sch
 ```
 
-Note: The decoder is experimental. It generates valid KiCad schematics but uses simplified symbol representations (rectangles for ICs). See [docs/kicad-schematic-generation.md](docs/kicad-schematic-generation.md) for technical details.
+Note: The decoder is experimental. It generates valid KiCad schematics with:
+- Simplified symbol representations (rectangles with pin names for ICs)
+- Footprint lookup from `src/footprints.json` for common packages
+- Standard dual-inline pin layout for generic ICs
+
+See [docs/kicad-schematic-generation.md](docs/kicad-schematic-generation.md) for technical details.
 
 ### Render Comparison
 
@@ -165,7 +181,7 @@ python src/tokn_parser.py output.tokn
 ```
 tokn/
 ├── spec/
-│   └── TOKN-v1.md          # Format specification
+│   └── TOKN-v1.md          # Format specification (v1.2)
 ├── docs/
 │   └── kicad-schematic-generation.md  # Research on KiCad file generation
 ├── src/
@@ -174,6 +190,7 @@ tokn/
 │   ├── tokn_encoder.py     # KiCad → TOKN converter
 │   ├── tokn_parser.py      # TOKN parser
 │   ├── tokn_decoder.py     # TOKN → KiCad converter (experimental)
+│   ├── footprints.json     # Footprint lookup table for decoder
 │   └── render.py           # Schematic renderer
 └── examples/
     ├── mcp2551-can-transceiver/

@@ -3,7 +3,7 @@
 **Token-Optimised KiCad Notation**
 
 Version: 1.2
-Date: 2025-11-29
+Date: 2025-12-06
 
 ## 1. Overview
 
@@ -444,6 +444,23 @@ Decoders must maintain a reverse mapping table. Ambiguous types require context:
 | `LED` | `Device:LED` |
 
 For ICs, the type IS the part number; look up in KiCad library by name search.
+
+### 8.3 Footprint Lookup
+
+Decoders should maintain a footprint lookup table mapping:
+- Passive types (R, C, L) → standard SMD footprints based on shorthand (0402, 0603, 0805)
+- Package types → full KiCad footprint paths (SOIC-8, TSSOP-14, etc.)
+- Specific parts → manufacturer-specific footprints
+
+The reference implementation uses `footprints.json` for extensible lookup without code changes.
+
+### 8.4 Pin Placement
+
+When generating symbols for ICs:
+1. Use pin definitions from the `pins{REF}[N]:` section
+2. Apply standard dual-inline layout: pins 1-N/2 on left side, N/2+1 to N on right side
+3. Pin 1 at top-left, ascending downward; pin N/2+1 at bottom-right, ascending upward
+4. Include pin names from TOKN in the generated lib_symbol
 
 ## 9. Examples
 
