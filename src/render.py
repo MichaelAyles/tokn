@@ -139,6 +139,38 @@ def render_tokn(ax, sch: ToknSchematic):
                     pin_positions[(comp.ref, pin_num)] = best_pt
                     used_points.add(best_pt)
 
+        # For NC pins without wire connections, calculate positions from component dimensions
+        # Use standard dual-inline layout based on existing pin positions
+        if comp.ref in sch.pins and comp.type not in ('R', 'C', 'CP', 'L', 'D'):
+            num_pins = len(pin_nums)
+            pins_per_side = (num_pins + 1) // 2
+
+            # Use component dimensions for pin spread
+            pin_half_w = comp.w / 2 if comp.w > 0 else 10.16
+            pin_half_h = comp.h / 2 if comp.h > 0 else max(num_pins * 1.27, 7.62)
+            pin_spacing = (pin_half_h * 2) / max(pins_per_side - 1, 1)
+
+            for pin_num in pin_nums:
+                if (comp.ref, pin_num) in pin_positions:
+                    continue  # Already has position from wire
+
+                # Calculate position based on pin number
+                pin_idx = int(pin_num) if pin_num.isdigit() else 0
+                if pin_idx <= 0:
+                    continue
+
+                if pin_idx <= pins_per_side:
+                    # Left side: pin 1 at top, going down
+                    rel_x = -pin_half_w
+                    rel_y = -pin_half_h + (pin_idx - 1) * pin_spacing
+                else:
+                    # Right side: pin N/2+1 at bottom, going up
+                    right_idx = pin_idx - pins_per_side
+                    rel_x = pin_half_w
+                    rel_y = pin_half_h - (right_idx - 1) * pin_spacing
+
+                pin_positions[(comp.ref, pin_num)] = (comp.x + rel_x, comp.y + rel_y)
+
     # Build set of points that are connected to components (wire endpoints near component bounds)
     component_connected_points = set()
     for comp in sch.components:
