@@ -110,15 +110,20 @@ def normalize_footprint(footprint: str) -> str:
     if ':' in footprint:
         footprint = footprint.split(':')[-1]
 
-    # Common patterns
-    # SOIC-8_3.9x4.9mm_P1.27mm -> SOIC-8
-    match = re.match(r'(SOIC|TSSOP|SSOP|QFP|LQFP|TQFP|BGA|QFN|DFN|TO-\d+)[-_]?(\d+)?', footprint)
-    if match:
-        pkg = match.group(1)
-        pins = match.group(2)
-        if pins:
-            return f"{pkg}-{pins}"
-        return pkg
+    # IPC-7351 format: SOIC127P1030X265-20N -> SOIC-20
+    # Pattern: PKG + pitch(3 digits) + P + dimensions + -PINS + suffix
+    ipc_match = re.match(r'(SOIC|TSSOP|SSOP|QFP|LQFP|TQFP|QFN|DFN|BGA)\d{2,3}P.*-(\d+)[A-Z]?$', footprint)
+    if ipc_match:
+        pkg = ipc_match.group(1)
+        pins = ipc_match.group(2)
+        return f"{pkg}-{pins}"
+
+    # KiCad format: SOIC-8_3.9x4.9mm_P1.27mm -> SOIC-8
+    kicad_match = re.match(r'(SOIC|TSSOP|SSOP|QFP|LQFP|TQFP|BGA|QFN|DFN|TO-\d+)[-_](\d+)', footprint)
+    if kicad_match:
+        pkg = kicad_match.group(1)
+        pins = kicad_match.group(2)
+        return f"{pkg}-{pins}"
 
     return footprint
 
@@ -193,12 +198,57 @@ def encode_tokn(sch: Schematic, netlist: Netlist) -> str:
 
     lines.append('')
 
+    # Pins section - list pin definitions for ICs (components with meaningful pin names)
+    # Skip simple passives (R, C, L, D, etc.) where pin names aren't informative
+    passive_types = {'R', 'C', 'CP', 'L', 'D', 'DZ', 'DS', 'LED', 'F', 'FB'}
+
+    # Group pins by component reference
+    component_pins: dict[str, list[tuple[str, str]]] = {}  # ref -> [(num, name), ...]
+
+    for comp in components:
+        comp_type = normalize_type(comp.lib_id)
+        if comp_type in passive_types:
+            continue
+
+        # Get pin info from lib_symbol
+        lib_sym = None
+        if comp.lib_id in sch.lib_symbols:
+            lib_sym = sch.lib_symbols[comp.lib_id]
+
+        if lib_sym:
+            pins_for_comp = []
+            for pin in lib_sym.pins:
+                # Include all pins with names (even power/ground - full datasheet info)
+                if pin.name and pin.name != '~':
+                    pins_for_comp.append((pin.number, pin.name))
+
+            if pins_for_comp:
+                # Sort by pin number
+                pins_for_comp.sort(key=lambda p: int(p[0]) if p[0].isdigit() else p[0])
+                component_pins[comp.reference] = pins_for_comp
+
+    # Output pins grouped by component
+    if component_pins:
+        # Sort components by reference
+        sorted_refs = sorted(component_pins.keys(), key=lambda r: (
+            r[0] if r else '',
+            int(re.search(r'\d+', r).group()) if re.search(r'\d+', r) else 0
+        ))
+
+        for ref in sorted_refs:
+            pins_list = component_pins[ref]
+            lines.append(f'pins{{{ref}}}[{len(pins_list)}]:')
+            for num, name in pins_list:
+                lines.append(f'  {num},{quote_value(name)}')
+
+        lines.append('')
+
     # Nets section
     if netlist.nets:
         lines.append(f'nets[{len(netlist.nets)}]{{name,pins}}:')
         for net in netlist.nets:
             name = quote_value(net.name)
-            pins_list = [f"{ref}.{pin}" for ref, pin in net.pins]
+            pins_list = [f"{ref}.{pin_num}" for ref, pin_num, _ in net.pins]
             pins_str = ','.join(pins_list)
             # Quote pins if there are multiple (contains comma)
             if len(pins_list) > 1:

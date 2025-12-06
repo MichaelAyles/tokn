@@ -21,7 +21,7 @@ class WireSegment:
 class Net:
     """A net connecting multiple pins."""
     name: str
-    pins: list[tuple[str, str]] = field(default_factory=list)  # (ref, pin_number)
+    pins: list[tuple[str, str, str]] = field(default_factory=list)  # (ref, pin_number, pin_name)
     wires: list[WireSegment] = field(default_factory=list)  # Wire segments in this net
     is_power: bool = False
 
@@ -107,11 +107,19 @@ def analyze_connectivity(sch: Schematic, tolerance: float = 0.01) -> Netlist:
                 pts.add(pt)
         group_points[root] = pts
 
-    # Build pin position to (ref, pin_number) mapping
-    pin_positions: dict[Point, list[tuple[str, str]]] = defaultdict(list)
+    # Build pin position to (ref, pin_number, pin_name) mapping
+    pin_positions: dict[Point, list[tuple[str, str, str]]] = defaultdict(list)
     for comp in sch.components:
+        # Look up pin names from lib_symbol
+        lib_sym = sch.lib_symbols.get(comp.lib_id)
+        pin_names = {}
+        if lib_sym:
+            for pin in lib_sym.pins:
+                pin_names[pin.number] = pin.name
+
         for pin_num, pin_pos in comp.pins.items():
-            pin_positions[pin_pos].append((comp.reference, pin_num))
+            pin_name = pin_names.get(pin_num, '')
+            pin_positions[pin_pos].append((comp.reference, pin_num, pin_name))
 
     # Build label position to label name mapping
     label_positions: dict[Point, str] = {}
@@ -123,7 +131,7 @@ def analyze_connectivity(sch: Schematic, tolerance: float = 0.01) -> Netlist:
     anonymous_counter = 1
 
     for root, points in group_points.items():
-        pins: list[tuple[str, str]] = []
+        pins: list[tuple[str, str, str]] = []
         net_name: Optional[str] = None
         is_power = False
 
@@ -139,7 +147,7 @@ def analyze_connectivity(sch: Schematic, tolerance: float = 0.01) -> Netlist:
                     net_name = label_name
 
         # Check if any connected pin is a power symbol
-        for ref, pin_num in pins:
+        for ref, pin_num, pin_name in pins:
             comp = next((c for c in sch.components if c.reference == ref), None)
             if comp and comp.lib_id in sch.lib_symbols:
                 if sch.lib_symbols[comp.lib_id].is_power:
@@ -149,7 +157,7 @@ def analyze_connectivity(sch: Schematic, tolerance: float = 0.01) -> Netlist:
                     break
 
         # Remove power symbol pins from the pin list (they define nets, not connections)
-        pins = [(ref, pin) for ref, pin in pins
+        pins = [(ref, pin_num, pin_name) for ref, pin_num, pin_name in pins
                 if not (any(c.reference == ref and c.lib_id in sch.lib_symbols and
                           sch.lib_symbols[c.lib_id].is_power
                           for c in sch.components))]
@@ -232,7 +240,7 @@ def analyze_connectivity(sch: Schematic, tolerance: float = 0.01) -> Netlist:
 
     # Sort pins within each net
     for net in nets:
-        net.pins.sort(key=lambda p: (p[0], int(p[1]) if p[1].isdigit() else 0))
+        net.pins.sort(key=lambda p: (p[0], int(p[1]) if p[1].isdigit() else 0, p[2]))
 
     return Netlist(nets=nets, components=real_components)
 
@@ -250,7 +258,8 @@ def print_netlist(netlist: Netlist):
 
     print("\nNets:")
     for net in netlist.nets:
-        pins_str = ", ".join(f"{ref}.{pin}" for ref, pin in net.pins)
+        pins_str = ", ".join(f"{ref}.{pin_num}:{pin_name}" if pin_name else f"{ref}.{pin_num}"
+                             for ref, pin_num, pin_name in net.pins)
         power_marker = " [POWER]" if net.is_power else ""
         print(f"  {net.name}: {pins_str}{power_marker}")
 

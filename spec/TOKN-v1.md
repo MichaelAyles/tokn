@@ -2,7 +2,7 @@
 
 **Token-Optimised KiCad Notation**
 
-Version: 1.1
+Version: 1.2
 Date: 2025-11-29
 
 ## 1. Overview
@@ -34,6 +34,9 @@ title: <schematic title>
 
 components[N]{ref,type,value,fp,x,y,w,h,a}:
   <component rows>
+
+pins{REF}[N]:
+  <pin rows for REF>
 
 nets[N]{name,pins}:
   <net rows>
@@ -184,6 +187,72 @@ For unlisted footprints, use the final component of the footprint path.
 
 Omit footprint if not specified in source schematic.
 
+## 4a. Pins Section
+
+### 4a.1 Format
+
+Pins are grouped by component reference to minimize repetition:
+
+```toon
+pins{IC19}[20]:
+  1,VDD
+  2,GND
+  3,VREF
+  4,OUT
+  5,NC_1
+  6,NC_2
+  7,INT/HOLD
+  8,~{CS}
+  9,XIN
+  10,XOUT
+  11,SDO
+  12,SDI
+  13,SCLK
+  14,~{TEST}
+  15,CH2P
+  16,CH2N
+  17,CH2FB
+  18,CH1FB
+  19,CH1N
+  20,CH1P
+pins{Y1}[4]:
+  1,EN-H/Float
+  2,GND
+  3,OUTPUT
+  4,VDD
+```
+
+### 4a.2 Header Format
+
+`pins{REF}[N]:` where:
+- `REF` is the component reference designator
+- `N` is the total pin count for this component
+
+### 4a.3 Pin Row Format
+
+Each pin row is `num,name` where:
+- `num` is the pin number
+- `name` is the full datasheet pin name, including alternate functions (e.g., `PC6/~{RESET}`)
+
+### 4a.4 Purpose
+
+The pins section provides complete pin definitions from the symbol library. This enables LLMs to:
+- Understand pin functions for all pins, including unconnected ones
+- Make correct connections based on alternate pin functions
+- Handle multi-function pins (e.g., GPIO with UART/SPI alternates)
+
+### 4a.5 Inclusion Rules
+
+All pins are included for complex components (ICs, crystals, connectors, etc.) where pin names provide semantic value. Pins sections are omitted for:
+
+- Passive components (R, C, L, D) — pin names aren't meaningful
+- Pins named `~` (undefined in symbol)
+
+### 4a.6 Ordering
+
+- Components are ordered by reference designator (same rules as §3.6)
+- Pins within each component are ordered by pin number (ascending)
+
 ## 5. Nets Section
 
 ### 5.1 Format
@@ -213,6 +282,8 @@ Examples:
 - `R1.1` — Pin 1 of R1
 - `U1.14` — Pin 14 of U1
 - `J1.3` — Pin 3 of connector J1
+
+Pin names are defined separately in the pins section (§4a).
 
 ### 5.4 Net Naming
 
@@ -389,6 +460,16 @@ components[5]{ref,type,value,fp,x,y,w,h,a}:
   R2,R,60R,,172.72,85.09,7.62,0.00,90
   U1,MCP2551,MCP2551-I-SN,SOIC-8,149.86,85.09,25.40,20.32,0
 
+pins{U1}[8]:
+  1,TXD
+  2,VSS
+  3,VDD
+  4,RXD
+  5,Vref
+  6,CANL
+  7,CANH
+  8,Rs
+
 nets[8]{name,pins}:
   +5V,"C61.1,U1.3"
   GND,"C60.2,C61.2,R1.2,U1.2"
@@ -421,6 +502,12 @@ A valid TOKN document must:
 7. Have wire net names that exist in the nets section
 
 ## 11. Version History
+
+### v1.2 (2025-12-06)
+- Added pins section for IC pin definitions (§4a)
+- Pin names documented separately from nets for all IC pins (including unconnected)
+- Nets section uses simple `REF.PIN` format
+- Fixed IPC-7351 footprint parsing (e.g., `SOIC127P...-20N` → `SOIC-20`)
 
 ### v1.1 (2025-11-29)
 - Added component position fields: x, y (center coordinates)

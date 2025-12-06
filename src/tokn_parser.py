@@ -33,9 +33,16 @@ class ToknWire:
 
 
 @dataclass
+class ToknPin:
+    num: str
+    name: str
+
+
+@dataclass
 class ToknSchematic:
     title: str = ''
     components: list[ToknComponent] = field(default_factory=list)
+    pins: dict[str, list[ToknPin]] = field(default_factory=dict)  # ref -> list of pins
     nets: list[ToknNet] = field(default_factory=list)
     wires: list[ToknWire] = field(default_factory=list)
 
@@ -87,6 +94,30 @@ def parse_tokn(text: str) -> ToknSchematic:
                 )
                 sch.components.append(comp)
                 i += 1
+            continue
+
+        # Pins section - pins{REF}[N]:
+        match = re.match(r'pins\{([^}]+)\}\[(\d+)\]:', line)
+        if match:
+            ref = match.group(1)
+            count = int(match.group(2))
+            i += 1
+            pins_list = []
+            for _ in range(count):
+                if i >= len(lines):
+                    break
+                row = lines[i].strip()
+                if not row or row.startswith('#'):
+                    i += 1
+                    continue
+                # Check if this is a new section header (not a pin row)
+                if re.match(r'(pins|nets|wires|components)\{?', row):
+                    break
+                values = parse_csv_row(row)
+                if len(values) >= 2:
+                    pins_list.append(ToknPin(num=values[0], name=values[1]))
+                i += 1
+            sch.pins[ref] = pins_list
             continue
 
         # Nets section

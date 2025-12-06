@@ -482,6 +482,15 @@ def draw_tokn_component(ax, comp, pin_positions=None):
                 edge_x = x + dx / dist * body_size
                 edge_y = y + dy / dist * body_size
                 ax.plot([edge_x, px], [edge_y, py], 'k-', linewidth=1.5, zorder=2)
+                # Pin dot and number
+                ax.plot(px, py, 'ko', markersize=2, zorder=3)
+                # Position pin number on opposite side from component center
+                offset_x = 1.5 if px > x else -1.5
+                offset_y = 1 if py > y else -1
+                ha = 'left' if px > x else 'right'
+                va = 'top' if py > y else 'bottom'
+                ax.annotate(pin_num, (px + offset_x, py + offset_y), fontsize=5,
+                           ha=ha, va=va, zorder=5, color='#666666')
 
         # Labels
         ax.annotate(comp.ref, (x + 3, y - 2), fontsize=6, fontweight='bold',
@@ -539,6 +548,14 @@ def draw_tokn_component(ax, comp, pin_positions=None):
                     edge_y = y + reg_h/2
                     edge_x = max(x - reg_w/2, min(x + reg_w/2, px))
             ax.plot([edge_x, px], [edge_y, py], 'k-', linewidth=1.5, zorder=2)
+            # Pin dot and number
+            ax.plot(px, py, 'ko', markersize=2, zorder=3)
+            offset_x = 1.5 if px > x else -1.5
+            offset_y = 1 if py > y else -1
+            ha = 'left' if px > x else 'right'
+            va = 'top' if py > y else 'bottom'
+            ax.annotate(pin_num, (px + offset_x, py + offset_y), fontsize=5,
+                       ha=ha, va=va, zorder=5, color='#666666')
 
         # Labels
         ax.annotate(comp.ref, (x, y - reg_h/2 - 1), fontsize=6, fontweight='bold',
@@ -563,6 +580,41 @@ def draw_tokn_component(ax, comp, pin_positions=None):
             zorder=2
         )
         ax.add_patch(rect)
+
+        # Draw pin numbers
+        for pin_num, (px, py) in pin_positions.items():
+            # Determine which side of the component this pin is on
+            is_left = px < x - width / 4
+            is_right = px > x + width / 4
+            is_top = py < y - height / 4
+            is_bottom = py > y + height / 4
+
+            if is_left:
+                # Left side - text inside, right of pin
+                ha, va = 'left', 'center'
+                offset_x, offset_y = 1.5, 0
+            elif is_right:
+                # Right side - text inside, left of pin
+                ha, va = 'right', 'center'
+                offset_x, offset_y = -1.5, 0
+            elif is_top:
+                # Top side - text below pin (inside component)
+                ha, va = 'center', 'top'
+                offset_x, offset_y = 0, 1.5
+            elif is_bottom:
+                # Bottom side - text above pin (inside component)
+                ha, va = 'center', 'bottom'
+                offset_x, offset_y = 0, -1.5
+            else:
+                # Center (shouldn't happen)
+                ha, va = 'center', 'center'
+                offset_x, offset_y = 0, 0
+
+            # Draw small dot at pin position
+            ax.plot(px, py, 'ko', markersize=2, zorder=3)
+            # Draw pin number
+            ax.annotate(pin_num, (px + offset_x, py + offset_y), fontsize=5,
+                       ha=ha, va=va, zorder=5, color='#666666')
 
         # Reference above the box, value centered inside the box
         ax.annotate(comp.ref, (x, rect_y - 1), fontsize=7, fontweight='bold',
