@@ -78,38 +78,7 @@ def render_tokn(ax, sch: ToknSchematic):
     pin_positions = {}  # (ref, pin_num) -> (x, y)
     comp_map = {c.ref: c for c in sch.components}
 
-    # For ICs with pin definitions, calculate positions using standard dual-inline layout
-    for comp in sch.components:
-        if comp.ref in sch.pins and comp.type not in ('R', 'C', 'CP', 'L', 'D'):
-            pin_defs = sch.pins[comp.ref]
-            num_pins = len(pin_defs)
-            if num_pins == 0:
-                continue
-
-            # Use component dimensions or defaults
-            half_w = comp.w / 2 if comp.w > 0 else 10.16
-            half_h = comp.h / 2 if comp.h > 0 else max(num_pins * 1.27, 7.62)
-
-            # Standard dual-inline layout: pins 1-N/2 on left, N/2+1 to N on right
-            pins_per_side = (num_pins + 1) // 2
-            pin_spacing = (half_h * 2 - 5.08) / max(pins_per_side - 1, 1)
-
-            sorted_pins = sorted(pin_defs, key=lambda p: int(p.num) if p.num.isdigit() else 0)
-            for i, pin in enumerate(sorted_pins):
-                pin_idx = int(pin.num) if pin.num.isdigit() else i + 1
-                if pin_idx <= pins_per_side:
-                    # Left side: pin 1 at top, going down
-                    rel_x = -half_w
-                    rel_y = -half_h + 2.54 + (pin_idx - 1) * pin_spacing
-                else:
-                    # Right side: pin N/2+1 at bottom, going up
-                    right_idx = pin_idx - pins_per_side
-                    rel_x = half_w
-                    rel_y = half_h - 2.54 - (right_idx - 1) * pin_spacing
-
-                pin_positions[(comp.ref, pin.num)] = (comp.x + rel_x, comp.y + rel_y)
-
-    # For passives and components without pin defs, use net-based positions
+    # Build map of net -> wire endpoints
     net_wire_points = {}  # net_name -> list of all wire endpoints
     for wire in sch.wires:
         if wire.net not in net_wire_points:
@@ -117,24 +86,58 @@ def render_tokn(ax, sch: ToknSchematic):
         for pt in wire.points:
             net_wire_points[wire.net].append(pt)
 
+    # Build map of (ref, pin_num) -> net_name from nets section
+    pin_to_net = {}
     for net in sch.nets:
-        wire_points = net_wire_points.get(net.name, [])
         for ref, pin_num in net.pins:
-            # Skip if already have position from pin defs
-            if (ref, pin_num) in pin_positions:
+            pin_to_net[(ref, pin_num)] = net.name
+
+    # For each component, find wire endpoints for each pin
+    for comp in sch.components:
+        # Get component bounds for finding nearby wire points
+        half_w = comp.w / 2 + 5 if comp.w > 0 else 15
+        half_h = comp.h / 2 + 5 if comp.h > 0 else 15
+
+        # Collect all wire endpoints near this component
+        nearby_points = []
+        for wire in sch.wires:
+            for pt in wire.points:
+                px, py = pt
+                if (comp.x - half_w <= px <= comp.x + half_w and
+                    comp.y - half_h <= py <= comp.y + half_h):
+                    nearby_points.append((pt, wire.net))
+
+        # Get pins for this component (from pins section or nets)
+        if comp.ref in sch.pins:
+            pin_nums = [p.num for p in sch.pins[comp.ref]]
+        else:
+            pin_nums = [pin_num for (ref, pin_num) in pin_to_net.keys() if ref == comp.ref]
+
+        # For each pin, find the best matching wire endpoint
+        used_points = set()
+        for pin_num in pin_nums:
+            net_name = pin_to_net.get((comp.ref, pin_num))
+            if not net_name:
                 continue
-            if ref in comp_map and wire_points:
-                comp = comp_map[ref]
-                # Find the wire point closest to this component's center
-                best_pt = None
-                best_dist = float('inf')
-                for pt in wire_points:
-                    dist = ((pt[0] - comp.x) ** 2 + (pt[1] - comp.y) ** 2) ** 0.5
-                    if dist < best_dist:
-                        best_dist = dist
-                        best_pt = pt
-                if best_pt:
-                    pin_positions[(ref, pin_num)] = best_pt
+
+            # Find wire endpoints for this net that are near the component
+            candidates = [(pt, net) for pt, net in nearby_points
+                         if net == net_name and pt not in used_points]
+
+            if candidates:
+                # Use the closest unused point for this net
+                best_pt = min(candidates, key=lambda x:
+                    ((x[0][0] - comp.x) ** 2 + (x[0][1] - comp.y) ** 2) ** 0.5)[0]
+                pin_positions[(comp.ref, pin_num)] = best_pt
+                used_points.add(best_pt)
+            elif net_name in net_wire_points:
+                # Fall back to closest point on this net overall
+                wire_points = [pt for pt in net_wire_points[net_name] if pt not in used_points]
+                if wire_points:
+                    best_pt = min(wire_points, key=lambda pt:
+                        ((pt[0] - comp.x) ** 2 + (pt[1] - comp.y) ** 2) ** 0.5)
+                    pin_positions[(comp.ref, pin_num)] = best_pt
+                    used_points.add(best_pt)
 
     # Build set of points that are connected to components (wire endpoints near component bounds)
     component_connected_points = set()
