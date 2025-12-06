@@ -74,12 +74,42 @@ def render_tokn(ax, sch: ToknSchematic):
 
     all_x, all_y = [], []
 
-    # Build map of component pin positions from net definitions and wire endpoints
-    # For each (ref, pin) pair, find the wire endpoint that's closest to the component
+    # Build map of component pin positions
     pin_positions = {}  # (ref, pin_num) -> (x, y)
     comp_map = {c.ref: c for c in sch.components}
 
-    # First, collect all wire endpoints for each net
+    # For ICs with pin definitions, calculate positions using standard dual-inline layout
+    for comp in sch.components:
+        if comp.ref in sch.pins and comp.type not in ('R', 'C', 'CP', 'L', 'D'):
+            pin_defs = sch.pins[comp.ref]
+            num_pins = len(pin_defs)
+            if num_pins == 0:
+                continue
+
+            # Use component dimensions or defaults
+            half_w = comp.w / 2 if comp.w > 0 else 10.16
+            half_h = comp.h / 2 if comp.h > 0 else max(num_pins * 1.27, 7.62)
+
+            # Standard dual-inline layout: pins 1-N/2 on left, N/2+1 to N on right
+            pins_per_side = (num_pins + 1) // 2
+            pin_spacing = (half_h * 2 - 5.08) / max(pins_per_side - 1, 1)
+
+            sorted_pins = sorted(pin_defs, key=lambda p: int(p.num) if p.num.isdigit() else 0)
+            for i, pin in enumerate(sorted_pins):
+                pin_idx = int(pin.num) if pin.num.isdigit() else i + 1
+                if pin_idx <= pins_per_side:
+                    # Left side: pin 1 at top, going down
+                    rel_x = -half_w
+                    rel_y = -half_h + 2.54 + (pin_idx - 1) * pin_spacing
+                else:
+                    # Right side: pin N/2+1 at bottom, going up
+                    right_idx = pin_idx - pins_per_side
+                    rel_x = half_w
+                    rel_y = half_h - 2.54 - (right_idx - 1) * pin_spacing
+
+                pin_positions[(comp.ref, pin.num)] = (comp.x + rel_x, comp.y + rel_y)
+
+    # For passives and components without pin defs, use net-based positions
     net_wire_points = {}  # net_name -> list of all wire endpoints
     for wire in sch.wires:
         if wire.net not in net_wire_points:
@@ -87,10 +117,12 @@ def render_tokn(ax, sch: ToknSchematic):
         for pt in wire.points:
             net_wire_points[wire.net].append(pt)
 
-    # For each pin in each net, find the closest wire point to the component
     for net in sch.nets:
         wire_points = net_wire_points.get(net.name, [])
         for ref, pin_num in net.pins:
+            # Skip if already have position from pin defs
+            if (ref, pin_num) in pin_positions:
+                continue
             if ref in comp_map and wire_points:
                 comp = comp_map[ref]
                 # Find the wire point closest to this component's center
