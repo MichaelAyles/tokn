@@ -1,177 +1,170 @@
 # TOKN Benchmark Suite
 
-Benchmarks for evaluating LLM performance on TOKN circuit generation.
+Comprehensive evaluation framework for measuring LLM performance at generating valid electronic circuit schematics in TOKN format.
 
 ## Overview
 
-This suite tests a model's ability to generate valid TOKN schematics from natural language prompts. It establishes baseline metrics before fine-tuning and measures improvement after.
+This suite tests a model's ability to generate valid, functional TOKN circuits from natural language prompts. It combines:
+- **Static validation** — syntax, semantic, and requirement checking
+- **AI semantic scoring** — evaluates if circuits would actually work
 
-## Components
-
-### `prompts.py` - Prompt Generator
-
-Generates varied natural language prompts from the training data.
+## Quick Start
 
 ```bash
-python benchmark/prompts.py
-```
+# Install dependencies
+pip install openai python-dotenv
 
-**Output:** `benchmark/test_prompts.jsonl`
+# Set API keys in .env.local (project root)
+OPENROUTER_API_KEY=your_openrouter_key
+CEREBRAS_API_KEY=your_cerebras_key
 
-**Prompt styles:**
-- `direct_give` - "Give me a TOKN circuit for..."
-- `direct_create` - "Create a {name} in TOKN format"
-- `component_focused` - "Design a circuit using {components}"
-- `function_focused` - "I need to {use_case}"
-- `tag_based` - "Give me a {tag} circuit"
-
-### `validate.py` - Validation Suite
-
-Validates generated TOKN for correctness.
-
-```bash
-python benchmark/validate.py <file.tokn> [--verbose] [--roundtrip]
-```
-
-**Validation checks:**
-
-1. **Syntax validity** - Parses as valid TOKN
-2. **Semantic validity** - References exist, connections make sense
-3. **Completeness** - Has decoupling caps, power/ground for ICs
-4. **Round-trip** (optional) - Can decode back to KiCad
-
-**Scoring:**
-- Base score: 1.0
-- -0.1 per semantic error
-- -0.02 per warning
-- -0.2 for roundtrip failure
-
-### `runner.py` - Benchmark Runner
-
-Runs prompts through a model API and collects results.
-
-```bash
-# Using OpenRouter (default) - requires OPENROUTER_API_KEY env var
-export OPENROUTER_API_KEY=your_key_here
-python benchmark/runner.py --limit 20
-
-# Specify model on OpenRouter
-python benchmark/runner.py --model anthropic/claude-sonnet-4 --limit 20
-python benchmark/runner.py --model openai/gpt-4o --limit 20
-python benchmark/runner.py --model google/gemini-pro-1.5 --limit 20
-
-# Using Anthropic directly
-python benchmark/runner.py --provider anthropic --model claude-sonnet-4-20250514 --limit 20
-
-# Using OpenAI directly
-python benchmark/runner.py --provider openai --model gpt-4o --limit 20
-```
-
-**Arguments:**
-- `--prompts` - Path to prompts JSONL (default: `benchmark/test_prompts.jsonl`)
-- `--output` - Output path for summary (default: `benchmark/results.json`)
-- `--model` - Model name (default depends on provider)
-- `--provider` - `openrouter` (default), `anthropic`, or `openai`
-- `--limit` - Limit number of prompts (for testing)
-
-**OpenRouter models:**
-- `anthropic/claude-sonnet-4` - Claude Sonnet 4
-- `anthropic/claude-haiku` - Claude Haiku (faster/cheaper)
-- `openai/gpt-4o` - GPT-4o
-- `google/gemini-pro-1.5` - Gemini Pro
-- `meta-llama/llama-3.1-70b-instruct` - Llama 3.1 70B
-
-**Output files:**
-- `benchmark/results.json` - Summary statistics
-- `benchmark/results_results.jsonl` - Detailed per-prompt results
-
-## Metrics
-
-### Per-prompt metrics
-- Syntax valid (bool)
-- Semantic valid (bool)
-- Complete (bool)
-- Validation score (0-1)
-- Generation time (ms)
-
-### Aggregate metrics
-- % Syntax valid
-- % Semantic valid
-- % Complete
-- Average validation score
-- Average generation time
-- Scores by prompt style
-
-## Usage
-
-### 1. Generate test prompts
-
-```bash
-python benchmark/prompts.py
-```
-
-### 2. Run baseline benchmark
-
-```bash
-# Test with small batch first
-python benchmark/runner.py --limit 10
-
-# Full benchmark
+# Run benchmark with defaults (2 easy, 2 medium, 2 hard)
 python benchmark/runner.py
+
+# Run with specific counts
+python benchmark/runner.py -e 10 -m 10 -H 10
+
+# Skip AI scoring for faster runs
+python benchmark/runner.py -e 5 -m 5 -H 5 --no-ai
 ```
 
-### 3. Fine-tune model
+## Providers & Models
 
-(Use training data from `data/training/`)
+### Cerebras (Recommended for speed)
 
-### 4. Run post-training benchmark
+Prefix models with `cerebras/`:
 
 ```bash
-python benchmark/runner.py --model <fine-tuned-model> --output benchmark/results_finetuned.json
+python benchmark/runner.py -e 5 --model cerebras/qwen-3-235b-a22b-instruct-2507
+python benchmark/runner.py -e 5 --model cerebras/llama-3.3-70b
+python benchmark/runner.py -e 5 --model cerebras/llama3.1-8b
+python benchmark/runner.py -e 5 --model cerebras/qwen-3-32b
+python benchmark/runner.py -e 5 --model cerebras/gpt-oss-120b
+python benchmark/runner.py -e 5 --model cerebras/zai-glm-4.6
 ```
 
-### 5. Compare results
+Requires `CEREBRAS_API_KEY` environment variable.
+
+### OpenRouter (Default)
+
+Use standard model names:
 
 ```bash
-python -c "
-import json
-baseline = json.load(open('benchmark/results.json'))
-finetuned = json.load(open('benchmark/results_finetuned.json'))
-print(f'Baseline score: {baseline[\"avg_validation_score\"]:.3f}')
-print(f'Fine-tuned score: {finetuned[\"avg_validation_score\"]:.3f}')
-print(f'Improvement: {finetuned[\"avg_validation_score\"] - baseline[\"avg_validation_score\"]:.3f}')
-"
+python benchmark/runner.py -e 5 --model google/gemini-2.5-flash
+python benchmark/runner.py -e 5 --model anthropic/claude-sonnet-4
+python benchmark/runner.py -e 5 --model openai/gpt-4o
 ```
 
-## Test Prompts
+Requires `OPENROUTER_API_KEY` environment variable.
 
-200 prompts generated from high-quality (score >= 5) training data:
+## Latest Results (December 2024)
 
-| Style | Count |
-|-------|-------|
-| direct_give | ~43 |
-| direct_create | ~45 |
-| component_focused | ~37 |
-| function_focused | ~41 |
-| tag_based | ~34 |
+Benchmarked on 30 prompts (10 easy, 10 medium, 10 hard) via Cerebras:
 
-Each prompt includes:
-- Natural language request
-- Reference TOKN (ground truth)
-- Metadata (subcircuit name, tags, source repo)
+| Model | AI Score | Static Score | Syntax Valid |
+|-------|----------|--------------|--------------|
+| **Qwen 3 235B** | 49.6/100 | 86.7% | 100% |
+| ZAI GLM 4.6 | 49.4/100 | 76.1% | 90% |
+| GPT-OSS 120B | 41.8/100 | 54.5% | 63% |
+| Llama 3.3 70B | 35.8/100 | 82.1% | 100% |
+| Qwen 3 32B | 14.5/100 | 32.4% | 40% |
+| Llama 3.1 8B | 12.6/100 | 57.1% | 80% |
 
-## System Prompt
+### By Difficulty Level
 
-The benchmark uses this system prompt for generation:
+| Model | Easy | Medium | Hard |
+|-------|------|--------|------|
+| Qwen 3 235B | 59.6 | 41.5 | 47.6 |
+| ZAI GLM 4.6 | 57.7 | 51.1 | 39.4 |
+| GPT-OSS 120B | 65.5 | 29.9 | 29.9 |
+| Llama 3.3 70B | 42.5 | 39.6 | 25.3 |
+| Qwen 3 32B | 7.0 | 15.7 | 20.9 |
+| Llama 3.1 8B | 1.4 | 16.7 | 19.6 |
+
+## Prompt Library
+
+| Difficulty | Count | Description |
+|------------|-------|-------------|
+| Easy | 100 | Single IC circuits (regulators, op-amps, 555 timers) |
+| Medium | 100 | 2-3 IC subsystems (motor drivers, sensor interfaces) |
+| Hard | 50 | 4+ IC complex systems (ECUs, keyboards, USB hubs) |
+
+### Example Prompts
+
+**Easy:**
+> Design a 5V linear regulator using LM7805 with 0.33uF input capacitor and 0.1uF output capacitor
+
+**Medium:**
+> Design a BLDC motor controller with DRV8313, MAX9918 bidirectional current sense amplifier with 10mOhm shunt
+
+**Hard:**
+> Design an engine control unit with STM32F407VGT6 processor, MCP2562 CAN transceiver, VNQ5050 quad high-side driver for injectors, BTS7008 for ignition coils, 8MHz crystal with 20pF load caps
+
+## Scoring System
+
+### Static Validation (validate.py)
+
+| Check | Weight | Description |
+|-------|--------|-------------|
+| Requirement matching | 50% | Required ICs and components present |
+| Semantic correctness | 30% | Valid connections, power pins connected |
+| Completeness | 20% | Decoupling caps, power/ground nets |
+
+### AI Scoring (ai_scorer.py)
+
+| Score | Weight | Description |
+|-------|--------|-------------|
+| Functionality | 35% | Will the circuit perform the requested function? |
+| Completeness | 25% | All necessary components present? |
+| Correctness | 25% | IC pins connected per datasheet? |
+| Best Practices | 15% | Appropriate values, good layout? |
+
+AI scoring uses Gemini 2.5 Flash via OpenRouter by default.
+
+## Output Structure
+
+Results are saved to timestamped directories:
 
 ```
-You are an expert electronics design assistant that generates TOKN format schematics.
-
-TOKN (Token-Optimised KiCad Notation) is a compact format for representing electronic schematics.
-
-[Format specification...]
-
-Generate valid, complete TOKN schematics based on the user's request.
+benchmark/output/YYMMDD_HHMMSS_results/
+  summary.json          # Overall benchmark summary
+  all_results.jsonl     # All results as JSONL
+  000_easy/             # Individual result folders
+    prompt.txt          # The prompt
+    output.tokn         # Generated TOKN
+    result.json         # Full result with scores
+  001_medium/
+  002_hard/
+  ...
 ```
 
-See `runner.py` for the full prompt.
+## CLI Reference
+
+```
+python benchmark/runner.py [options]
+
+Options:
+  -e, --easy N       Number of easy prompts (default: 2, max: 100)
+  -m, --medium N     Number of medium prompts (default: 2, max: 100)
+  -H, --hard N       Number of hard prompts (default: 2, max: 50)
+  --model MODEL      Model to use (default: google/gemini-2.5-flash)
+  --no-ai            Skip AI scoring (faster)
+  --prompts FILE     Custom prompts file (overrides -e/-m/-H)
+```
+
+## Files
+
+| File | Description |
+|------|-------------|
+| `runner.py` | Main benchmark runner with multi-provider support |
+| `validate.py` | Static TOKN validation suite |
+| `ai_scorer.py` | AI semantic scoring system |
+| `prompts_easy.py` | 100 easy prompts (single IC) |
+| `prompts_medium.py` | 100 medium prompts (2-3 ICs) |
+| `prompts_hard.py` | 50 hard prompts (4+ ICs, systems) |
+
+## Documentation
+
+- [Benchmark Suite Details](../docs/03-benchmark-suite.md) — Full documentation
+- [Model Comparison](../docs/04-model-comparison-dec2024.md) — Detailed analysis
+- [Fine-Tuning Dilemma](../docs/05-fine-tuning-dilemma.md) — Why bigger models win

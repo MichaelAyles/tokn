@@ -24,33 +24,48 @@ TOKN converts KiCad schematic files (`.kicad_sch`) into a token-efficient repres
 - **Enable round-trip conversion** — `kicad_sch → TOKN → kicad_sch`
 - **Be learnable** — consistent structure for LLM pattern learning
 
-### Conversion Flow
+## Benchmark Suite
 
-```
-┌─────────────────┐      encode      ┌─────────────────┐
-│                 │ ───────────────► │                 │
-│  .kicad_sch     │   -92% tokens    │     .tokn       │
-│  (38K tokens)   │                  │   (3K tokens)   │
-│                 │ ◄─────────────── │                 │
-└─────────────────┘      decode      └─────────────────┘
-                     (experimental)
-```
+We've built a comprehensive benchmark to evaluate LLM performance at generating valid TOKN circuits. See [docs/03-benchmark-suite.md](docs/03-benchmark-suite.md) for full details.
 
-### LLM Training Pipeline
+### Latest Results (December 2024)
 
-```
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│   KiCad      │     │    TOKN      │     │    LLM       │
-│  Schematics  │────►│   Corpus     │────►│  Training    │
-│   (large)    │     │  (compact)   │     │   Data       │
-└──────────────┘     └──────────────┘     └──────────────┘
-                            │
-                            ▼
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│   KiCad      │     │    TOKN      │     │    LLM       │
-│  Schematic   │◄────│   Output     │◄────│  Generation  │
-│   (usable)   │     │  (compact)   │     │   Output     │
-└──────────────┘     └──────────────┘     └──────────────┘
+Benchmarked on 30 prompts (10 easy, 10 medium, 10 hard) via Cerebras Inference:
+
+| Model | AI Score | Static Score | Syntax Valid |
+|-------|----------|--------------|--------------|
+| **Qwen 3 235B** | 49.6/100 | 86.7% | 100% |
+| ZAI GLM 4.6 | 49.4/100 | 76.1% | 90% |
+| GPT-OSS 120B | 41.8/100 | 54.5% | 63% |
+| Llama 3.3 70B | 35.8/100 | 82.1% | 100% |
+| Qwen 3 32B | 14.5/100 | 32.4% | 40% |
+| Llama 3.1 8B | 12.6/100 | 57.1% | 80% |
+
+**Key findings:**
+- Larger models have significantly better domain knowledge (IC pinouts, circuit theory)
+- Syntax validity doesn't correlate with correctness — models can produce valid TOKN that's electrically wrong
+- See [docs/04-model-comparison-dec2024.md](docs/04-model-comparison-dec2024.md) for detailed analysis
+- See [docs/05-fine-tuning-dilemma.md](docs/05-fine-tuning-dilemma.md) for discussion on whether fine-tuning helps
+
+### Running Benchmarks
+
+```bash
+# Install dependencies
+pip install openai python-dotenv
+
+# Set API keys in .env.local
+echo "OPENROUTER_API_KEY=your_key" >> .env.local
+echo "CEREBRAS_API_KEY=your_key" >> .env.local
+
+# Run benchmark (default: 2 easy, 2 medium, 2 hard)
+python benchmark/runner.py
+
+# Run with specific counts
+python benchmark/runner.py -e 10 -m 10 -H 10
+
+# Use different providers
+python benchmark/runner.py -e 5 --model google/gemini-2.5-flash      # OpenRouter
+python benchmark/runner.py -e 5 --model cerebras/qwen-3-235b-a22b-instruct-2507  # Cerebras
 ```
 
 ## Format
@@ -118,7 +133,7 @@ Note: The decoder is experimental. It generates valid KiCad schematics with:
 - Footprint lookup from `src/footprints.json` for common packages
 - Standard dual-inline pin layout for generic ICs
 
-See [docs/kicad-schematic-generation.md](docs/kicad-schematic-generation.md) for technical details.
+See [docs/01-kicad-schematic-generation.md](docs/01-kicad-schematic-generation.md) for technical details.
 
 ### Render Comparison
 
@@ -132,9 +147,15 @@ python src/render.py --compare schematic.kicad_sch output.tokn comparison.png
 python src/tokn_parser.py output.tokn
 ```
 
-## Known Issues
+## Training Data
 
-- **Component rotation**: Some passive components (R, C) may render with incorrect orientation in the preview. The rotation angle is stored correctly but the renderer doesn't always interpret it properly for all symbol orientations.
+We've collected and processed 10,000+ real-world KiCad schematics for potential LLM training:
+
+- **3,123 files** encoded to TOKN format
+- **10,088 subcircuits** identified and tagged
+- High-quality examples from popular open-source projects (crkbd, OpenMower, ThunderScope, etc.)
+
+See [docs/02-training-data-pipeline.md](docs/02-training-data-pipeline.md) for details.
 
 ## Architecture
 
@@ -181,17 +202,28 @@ python src/tokn_parser.py output.tokn
 ```
 tokn/
 ├── spec/
-│   └── TOKN-v1.md          # Format specification (v1.2)
+│   └── TOKN-v1.md              # Format specification (v1.2)
 ├── docs/
-│   └── kicad-schematic-generation.md  # Research on KiCad file generation
+│   ├── 01-kicad-schematic-generation.md   # KiCad file format research
+│   ├── 02-training-data-pipeline.md       # Training data collection
+│   ├── 03-benchmark-suite.md              # Benchmark documentation
+│   ├── 04-model-comparison-dec2024.md     # Model comparison results
+│   └── 05-fine-tuning-dilemma.md          # Analysis on fine-tuning value
 ├── src/
-│   ├── kicad_sch.py        # KiCad schematic parser
-│   ├── connectivity.py     # Net/connectivity analyzer
-│   ├── tokn_encoder.py     # KiCad → TOKN converter
-│   ├── tokn_parser.py      # TOKN parser
-│   ├── tokn_decoder.py     # TOKN → KiCad converter (experimental)
-│   ├── footprints.json     # Footprint lookup table for decoder
-│   └── render.py           # Schematic renderer
+│   ├── kicad_sch.py            # KiCad schematic parser
+│   ├── connectivity.py         # Net/connectivity analyzer
+│   ├── tokn_encoder.py         # KiCad → TOKN converter
+│   ├── tokn_parser.py          # TOKN parser
+│   ├── tokn_decoder.py         # TOKN → KiCad converter (experimental)
+│   ├── footprints.json         # Footprint lookup table
+│   └── render.py               # Schematic renderer
+├── benchmark/
+│   ├── runner.py               # Benchmark runner (multi-provider)
+│   ├── validate.py             # Static TOKN validation
+│   ├── ai_scorer.py            # AI semantic scoring
+│   ├── prompts_easy.py         # 100 easy prompts
+│   ├── prompts_medium.py       # 100 medium prompts
+│   └── prompts_hard.py         # 50 hard prompts
 └── examples/
     ├── mcp2551-can-transceiver/
     ├── max232-uart-rs232/
@@ -199,6 +231,10 @@ tokn/
     ├── 4-channel-current-source/
     └── tpic8101-knock-sensor/
 ```
+
+## Known Issues
+
+- **Component rotation**: Some passive components (R, C) may render with incorrect orientation in the preview. The rotation angle is stored correctly but the renderer doesn't always interpret it properly for all symbol orientations.
 
 ## Related
 
