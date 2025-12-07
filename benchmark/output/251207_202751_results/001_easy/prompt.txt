@@ -1,0 +1,1 @@
+Design a 48MHz crystal oscillator with 15pF load capacitors

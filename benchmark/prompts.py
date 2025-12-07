@@ -1,15 +1,16 @@
 """
 Benchmark prompts for TOKN generation.
 
-Generates varied natural language prompts from the training data
-for testing model performance before and after fine-tuning.
+Generates specific, testable prompts from the training data.
+Prompts include concrete component requirements that can be verified.
 """
 
 import json
 import random
+import re
 import sqlite3
 from pathlib import Path
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -18,95 +19,103 @@ class BenchmarkPrompt:
     prompt: str
     prompt_style: str
     reference_tokn: str
-    subcircuit_name: str
-    subcircuit_tags: list[str]
-    subcircuit_components: str
-    file_id: int
-    file_name: str
-    repo: str
-    score: float
+
+    # Requirements extracted from the prompt for validation
+    required_components: list[str] = field(default_factory=list)  # e.g., ["EMC2101", "10k", "0.1uF"]
+    required_ics: list[str] = field(default_factory=list)  # e.g., ["EMC2101", "RT9080"]
+
+    # Metadata
+    subcircuit_name: str = ""
+    subcircuit_tags: list[str] = field(default_factory=list)
+    subcircuit_components: str = ""
+    file_id: int = 0
+    file_name: str = ""
+    repo: str = ""
+    score: float = 0.0
 
 
-# Prompt templates for variety
-PROMPT_TEMPLATES = {
-    'direct_give': [
-        "Give me a TOKN circuit for {description}",
-        "Give me a {name}",
-        "I need a TOKN schematic for {description}",
-    ],
-    'direct_create': [
-        "Create a TOKN circuit for {description}",
-        "Create a {name} in TOKN format",
-        "Design a {name}",
-    ],
-    'component_focused': [
-        "Design a circuit using {components}",
-        "Create a TOKN schematic with {components}",
-        "I need a circuit built around {main_component}",
-    ],
-    'function_focused': [
-        "{use_case}",
-        "I need to {use_case_lower}",
-        "Design a circuit that can {use_case_lower}",
-    ],
-    'tag_based': [
-        "Give me a {tag} circuit",
-        "I need a {tag} design in TOKN",
-        "Create a {tag} schematic",
-    ],
-}
+def parse_components(components_str: str) -> tuple[list[str], list[str]]:
+    """Parse component string to extract ICs and values.
+
+    Input: "U7 (EMC2101), R9 (10k), C33 (0.1uF), C29 (0.1uF)"
+    Output: (["EMC2101"], ["EMC2101", "10k", "0.1uF"])
+    """
+    ics = []
+    all_parts = []
+
+    # Find IC part numbers in parentheses after U/IC references
+    ic_pattern = r'[UI]C?\d+\s*\(([^)]+)\)'
+    for match in re.finditer(ic_pattern, components_str):
+        part = match.group(1).strip()
+        # Must look like a part number (has letters and numbers, not just text)
+        if part and re.search(r'[A-Z].*\d|\d.*[A-Z]', part, re.I):
+            ics.append(part)
+            all_parts.append(part)
+
+    # Find values in parentheses (resistors, caps, inductors)
+    # Must be actual values like 10k, 0.1uF, 4.7nF, 100R, 2.2uH
+    value_pattern = r'[RCLF]\d+\s*\(([^)]+)\)'
+    for match in re.finditer(value_pattern, components_str):
+        value = match.group(1).strip()
+        # Must look like a component value (number + unit)
+        if value and re.match(r'^[\d.]+\s*[kKmMuUnNpPrRfFhH]', value):
+            all_parts.append(value)
+
+    return ics, all_parts
 
 
-def extract_main_component(components_str: str) -> str:
-    """Extract the main IC/component from a components string."""
-    # Look for U1, IC1, or first parenthetical part number
-    parts = components_str.split(',')
-    for part in parts:
-        part = part.strip()
-        if '(' in part:
-            # "ESP32-S3-MINI-1U (U1)" -> "ESP32-S3-MINI-1U"
-            return part.split('(')[0].strip()
-        if part.startswith('U') or part.startswith('IC'):
-            return part
-    return parts[0].strip() if parts else "component"
+def generate_specific_prompt(subcircuit: dict) -> tuple[str, str, list[str], list[str]]:
+    """Generate a specific, testable prompt from subcircuit data.
 
-
-def generate_prompt(subcircuit: dict, style: str = None) -> tuple[str, str]:
-    """Generate a natural language prompt from subcircuit data."""
+    Returns: (prompt_text, style, required_ics, required_components)
+    """
     name = subcircuit.get('name', '')
     description = subcircuit.get('description', '')
     components = subcircuit.get('components', '')
-    use_case = subcircuit.get('use_case', '')
-    tags = subcircuit.get('tags', [])
+    use_case = subcircuit.get('useCase', '')
 
-    # Pick a random style if not specified
-    if style is None:
-        style = random.choice(list(PROMPT_TEMPLATES.keys()))
+    ics, all_parts = parse_components(components)
 
-    templates = PROMPT_TEMPLATES[style]
-    template = random.choice(templates)
+    # Build a specific prompt that mentions the key components
+    style = random.choice(['detailed', 'component_list', 'functional'])
 
-    # Build substitution dict
-    main_component = extract_main_component(components)
-    use_case_lower = use_case.lower().lstrip('for ').lstrip('to ') if use_case else description.lower()[:100]
-    tag = random.choice(tags) if tags else 'electronic'
+    if style == 'detailed' and description:
+        # Use description but add component requirements
+        prompt = f"{description.split('.')[0]}."
+        if ics:
+            prompt += f" Use {', '.join(ics[:3])}."
+        if len(all_parts) > len(ics):
+            # Add some passive values
+            passives = [p for p in all_parts if p not in ics][:3]
+            if passives:
+                prompt += f" Include {', '.join(passives)} components."
 
-    # Short description (first sentence or truncated)
-    short_desc = description.split('.')[0] if description else name
-    if len(short_desc) > 80:
-        short_desc = short_desc[:77] + '...'
+    elif style == 'component_list':
+        # Direct component specification
+        if ics:
+            prompt = f"Design a {name} circuit using {', '.join(ics[:3])}"
+        else:
+            prompt = f"Design a {name} circuit"
 
-    prompt = template.format(
-        name=name,
-        description=short_desc,
-        components=components[:100] if len(components) > 100 else components,
-        main_component=main_component,
-        use_case=use_case[:100] if use_case and len(use_case) > 100 else use_case,
-        use_case_lower=use_case_lower[:100],
-        tag=tag,
-    )
+        # Add passive requirements
+        passives = [p for p in all_parts if p not in ics][:4]
+        if passives:
+            prompt += f" with {', '.join(passives)}"
+        prompt += "."
 
-    return prompt, style
+    else:  # functional
+        # Use case with component hints
+        if use_case:
+            prompt = f"I need to {use_case.lower().lstrip('to ').lstrip('for ')}."
+        else:
+            prompt = f"Create a {name}."
+
+        if ics:
+            prompt += f" Use {ics[0]}."
+        if len(all_parts) > 1:
+            prompt += f" Include appropriate decoupling."
+
+    return prompt, style, ics, all_parts
 
 
 def load_benchmark_prompts(
@@ -148,16 +157,32 @@ def load_benchmark_prompts(
             continue
 
         for sc in subcircuits:
-            # Generate a varied prompt
-            prompt_text, style = generate_prompt(sc)
+            # Skip subcircuits without specific components
+            components = sc.get('components', '')
+            if not components or len(components) < 10:
+                continue
+
+            # Generate specific prompt with requirements
+            prompt_text, style, req_ics, req_components = generate_specific_prompt(sc)
+
+            # REQUIRE at least one IC - this is what makes the benchmark meaningful
+            # Without a specific IC requirement, the model can generate any valid circuit
+            if not req_ics:
+                continue
+
+            # Also require at least 2 total components to test
+            if len(req_components) < 2:
+                continue
 
             benchmark = BenchmarkPrompt(
                 prompt=prompt_text,
                 prompt_style=style,
                 reference_tokn=tokn,
+                required_components=req_components,
+                required_ics=req_ics,
                 subcircuit_name=sc.get('name', ''),
                 subcircuit_tags=sc.get('tags', []),
-                subcircuit_components=sc.get('components', ''),
+                subcircuit_components=components,
                 file_id=file_id,
                 file_name=file_name,
                 repo=repo,
@@ -178,6 +203,8 @@ def export_prompts_jsonl(prompts: list[BenchmarkPrompt], output_path: str):
                 'prompt': p.prompt,
                 'prompt_style': p.prompt_style,
                 'reference_tokn': p.reference_tokn,
+                'required_components': p.required_components,
+                'required_ics': p.required_ics,
                 'metadata': {
                     'subcircuit_name': p.subcircuit_name,
                     'subcircuit_tags': p.subcircuit_tags,
@@ -211,9 +238,17 @@ def main():
     for style, count in sorted(styles.items()):
         print(f"  {style}: {count}")
 
+    # Show requirement stats
+    avg_ics = sum(len(p.required_ics) for p in prompts) / len(prompts)
+    avg_components = sum(len(p.required_components) for p in prompts) / len(prompts)
+    print(f"\nAverage required ICs per prompt: {avg_ics:.1f}")
+    print(f"Average required components per prompt: {avg_components:.1f}")
+
     print("\nSample prompts:")
     for p in prompts[:5]:
-        print(f"  [{p.prompt_style}] {p.prompt}")
+        print(f"\n  [{p.prompt_style}] {p.prompt}")
+        print(f"    Required ICs: {p.required_ics}")
+        print(f"    Required components: {p.required_components[:5]}...")
 
     export_prompts_jsonl(prompts, str(output_path))
 

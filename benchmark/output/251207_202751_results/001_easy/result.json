@@ -1,0 +1,46 @@
+{
+  "prompt_id": 1,
+  "prompt": "Design a 48MHz crystal oscillator with 15pF load capacitors",
+  "prompt_style": "easy",
+  "required_ics": [],
+  "required_components": [
+    "48MHz",
+    "15pF"
+  ],
+  "generated_tokn": "# TOKN v1\ntitle: 48MHz Crystal Oscillator\n\ncomponents[3]{ref,type,value,fp,x,y,w,h,a}:\n  Y1,XTAL,48MHz,HC-49/US,100,100,0,0,0\n  C1,C,15pF,0603,90,110,0,0,0\n  C2,C,15pF,0603,110,110,0,0,0\n\nnets[2]{name,pins}:\n  XTAL_OSC1,\"Y1.1,C1.1\"\n  XTAL_OSC2,\"Y1.2,C2.1\"\n  GND,\"C1.2,C2.2\"\n\nwires[3]{net,pts}:\n  XTAL_OSC1,\"100 100,90 100\"\n  XTAL_OSC2,\"100 100,110 100\"\n  GND,\"90 110,110 110\"",
+  "generation_time_ms": 1715.956449508667,
+  "static_score": 0.925,
+  "syntax_valid": true,
+  "semantic_valid": false,
+  "requirement_score": 1.0,
+  "matched_requirements": [
+    "48MHz",
+    "15pF"
+  ],
+  "missing_requirements": [],
+  "validation_errors": [
+    "Wire references undefined net 'GND'"
+  ],
+  "validation_warnings": [],
+  "ai_functionality_score": 0,
+  "ai_completeness_score": 0,
+  "ai_correctness_score": 0,
+  "ai_best_practices_score": 0,
+  "ai_overall_score": 0.0,
+  "ai_issues": [
+    "The circuit is missing an active component (e.g., an inverter, op-amp, or dedicated oscillator IC) to create the oscillation. A crystal and two capacitors alone cannot oscillate.",
+    "The crystal Y1 has only two pins, but the nets section implies it has two distinct connection points (Y1.1 and Y1.2) which is correct for a 2-pin crystal. However, the wires section shows '100 100' for both XTAL_OSC1 and XTAL_OSC2, which is the crystal's center point, not its pins.",
+    "The nets 'XTAL_OSC1' and 'XTAL_OSC2' are connected to the crystal, but there's no output or input for the oscillator, making it non-functional even if it could oscillate.",
+    "The 'GND' net connects C1.2 and C2.2, which is correct for a Pierce oscillator configuration, but without an active component, this connection is insufficient.",
+    "The component 'Y1' is defined with width and height as 0,0 which is unusual for a component symbol, though not critical for electrical function."
+  ],
+  "ai_suggestions": [
+    "Add an active component such as a 74HC04 inverter (or similar logic gate configured as an inverter) or a dedicated crystal oscillator IC to form a Pierce oscillator or other suitable oscillator circuit.",
+    "If using an inverter, include a feedback resistor (e.g., 1M Ohm) and a series resistor (e.g., 330 Ohm) for proper operation.",
+    "Ensure power and ground connections are provided to the active component.",
+    "Clearly define the input and output of the oscillator circuit."
+  ],
+  "ai_explanation": "The provided circuit is fundamentally incomplete and non-functional. A crystal and two capacitors alone cannot generate an oscillation; an active component (like an inverter or dedicated oscillator IC) is required to provide gain and feedback. Without this, the circuit will not oscillate as requested.",
+  "subcircuit_name": "48MHz Crystal Oscillator",
+  "model_name": "google/gemini-2.5-flash"
+}

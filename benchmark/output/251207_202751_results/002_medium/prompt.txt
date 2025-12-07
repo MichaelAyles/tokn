@@ -1,0 +1,1 @@
+Design a TFT display interface with ILI9341 TFT controller, 74HC4050 hex buffer for 5V to 3.3V level shifting on SPI, 100nF decoupling on both ICs, and 10uF bulk capacitor on display

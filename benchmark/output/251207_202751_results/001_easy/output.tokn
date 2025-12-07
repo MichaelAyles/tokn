@@ -1,0 +1,17 @@
+# TOKN v1
+title: 48MHz Crystal Oscillator
+
+components[3]{ref,type,value,fp,x,y,w,h,a}:
+  Y1,XTAL,48MHz,HC-49/US,100,100,0,0,0
+  C1,C,15pF,0603,90,110,0,0,0
+  C2,C,15pF,0603,110,110,0,0,0
+
+nets[2]{name,pins}:
+  XTAL_OSC1,"Y1.1,C1.1"
+  XTAL_OSC2,"Y1.2,C2.1"
+  GND,"C1.2,C2.2"
+
+wires[3]{net,pts}:
+  XTAL_OSC1,"100 100,90 100"
+  XTAL_OSC2,"100 100,110 100"
+  GND,"90 110,110 110"

@@ -1,0 +1,36 @@
+{
+  "timestamp": "251207_202751",
+  "model_name": "google/gemini-2.5-flash",
+  "total_prompts": 3,
+  "easy_count": 1,
+  "medium_count": 1,
+  "hard_count": 1,
+  "syntax_valid_count": 3,
+  "semantic_valid_count": 2,
+  "avg_static_score": 0.975,
+  "avg_requirement_score": 1.0,
+  "avg_ai_functionality": 43.333333333333336,
+  "avg_ai_completeness": 33.333333333333336,
+  "avg_ai_correctness": 30.0,
+  "avg_ai_best_practices": 30.0,
+  "avg_ai_overall": 35.5,
+  "avg_generation_time_ms": 9277.04652150472,
+  "total_run_time_s": 52.477452993392944,
+  "scores_by_difficulty": {
+    "easy": {
+      "count": 1,
+      "avg_static_score": 0.925,
+      "avg_ai_overall": 0.0
+    },
+    "medium": {
+      "count": 1,
+      "avg_static_score": 1.0,
+      "avg_ai_overall": 57.0
+    },
+    "hard": {
+      "count": 1,
+      "avg_static_score": 1.0,
+      "avg_ai_overall": 49.5
+    }
+  }
+}

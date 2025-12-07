@@ -1,0 +1,15 @@
+{
+  "model_name": "google/gemini-2.5-flash",
+  "total_prompts": 6,
+  "successful_generations": 6,
+  "syntax_valid": 6,
+  "semantic_valid": 5,
+  "complete": 5,
+  "avg_validation_score": 0.9741666666666666,
+  "avg_generation_time_ms": 7894.628008206685,
+  "scores_by_style": {
+    "hard": 0.9525,
+    "medium": 0.9775,
+    "easy": 0.9924999999999999
+  }
+}

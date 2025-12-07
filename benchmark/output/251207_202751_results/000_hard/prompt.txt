@@ -1,0 +1,1 @@
+Design a fixed-wing autopilot with STM32H743VIT6, ADIS16470 IMU, ublox MAX-M10S GPS, RFD900 telemetry interface, PWM outputs for 8 servos using PCA9685, magnetometer LIS3MDL, airspeed sensor MPXV7002DP, SD logging.
