@@ -246,6 +246,103 @@ def run_benchmark_openai(
     save_results(results, output_path, model)
 
 
+def run_benchmark_openrouter(
+    prompts_path: str,
+    output_path: str,
+    model: str = "anthropic/claude-sonnet-4",
+    limit: int = None,
+):
+    """Run benchmark using OpenRouter API.
+
+    OpenRouter provides access to multiple models through one API.
+    Set OPENROUTER_API_KEY environment variable.
+
+    Popular models:
+    - anthropic/claude-sonnet-4
+    - anthropic/claude-haiku
+    - openai/gpt-4o
+    - google/gemini-pro-1.5
+    - meta-llama/llama-3.1-70b-instruct
+    """
+    try:
+        import openai
+    except ImportError:
+        print("Error: openai package not installed. Run: pip install openai")
+        return
+
+    api_key = os.environ.get('OPENROUTER_API_KEY')
+    if not api_key:
+        print("Error: OPENROUTER_API_KEY environment variable not set")
+        print("Get your API key from https://openrouter.ai/keys")
+        return
+
+    client = openai.OpenAI(
+        base_url="https://openrouter.ai/api/v1",
+        api_key=api_key,
+    )
+    results = []
+
+    with open(prompts_path, 'r', encoding='utf-8') as f:
+        prompts = [json.loads(line) for line in f]
+
+    if limit:
+        prompts = prompts[:limit]
+
+    print(f"Running benchmark with {len(prompts)} prompts using {model} via OpenRouter")
+
+    for i, prompt_data in enumerate(prompts):
+        prompt = prompt_data['prompt']
+        print(f"\n[{i+1}/{len(prompts)}] {prompt[:60]}...")
+
+        start_time = time.time()
+
+        try:
+            response = client.chat.completions.create(
+                model=model,
+                max_tokens=4096,
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": prompt}
+                ],
+                extra_headers={
+                    "HTTP-Referer": "https://github.com/MichaelAyles/tokn",
+                    "X-Title": "TOKN Benchmark"
+                }
+            )
+            generated = response.choices[0].message.content
+        except Exception as e:
+            print(f"  Error: {e}")
+            generated = ""
+
+        generation_time = (time.time() - start_time) * 1000
+
+        # Extract TOKN from response
+        tokn_text = extract_tokn(generated)
+
+        # Validate
+        validation = validate_tokn(tokn_text) if tokn_text else ValidationResult(valid=False, syntax_valid=False)
+
+        result = BenchmarkResult(
+            prompt=prompt,
+            prompt_style=prompt_data.get('prompt_style', 'unknown'),
+            generated_tokn=tokn_text,
+            reference_tokn=prompt_data.get('reference_tokn', ''),
+            validation=validation,
+            generation_time_ms=generation_time,
+            subcircuit_name=prompt_data.get('metadata', {}).get('subcircuit_name', ''),
+            file_name=prompt_data.get('metadata', {}).get('file_name', ''),
+            repo=prompt_data.get('metadata', {}).get('repo', ''),
+            reference_score=prompt_data.get('metadata', {}).get('score', 0),
+            model_name=model,
+        )
+        results.append(result)
+
+        print(f"  Valid: {validation.valid}, Score: {validation.score():.2f}, Time: {generation_time:.0f}ms")
+
+    # Save results
+    save_results(results, output_path, model)
+
+
 def extract_tokn(text: str) -> str:
     """Extract TOKN content from a model response."""
     if not text:
@@ -350,16 +447,28 @@ def main():
     parser = argparse.ArgumentParser(description='Run TOKN generation benchmark')
     parser.add_argument('--prompts', default='benchmark/test_prompts.jsonl', help='Prompts file')
     parser.add_argument('--output', default='benchmark/results.json', help='Output path')
-    parser.add_argument('--model', default='claude-sonnet-4-20250514', help='Model to use')
-    parser.add_argument('--provider', choices=['anthropic', 'openai'], default='anthropic')
+    parser.add_argument('--model', help='Model to use (default depends on provider)')
+    parser.add_argument('--provider', choices=['anthropic', 'openai', 'openrouter'], default='openrouter',
+                        help='API provider (default: openrouter)')
     parser.add_argument('--limit', type=int, help='Limit number of prompts')
 
     args = parser.parse_args()
 
+    # Set default model based on provider
+    if args.model is None:
+        if args.provider == 'anthropic':
+            args.model = 'claude-sonnet-4-20250514'
+        elif args.provider == 'openai':
+            args.model = 'gpt-4o'
+        else:  # openrouter
+            args.model = 'anthropic/claude-sonnet-4'
+
     if args.provider == 'anthropic':
         run_benchmark_anthropic(args.prompts, args.output, args.model, args.limit)
-    else:
+    elif args.provider == 'openai':
         run_benchmark_openai(args.prompts, args.output, args.model, args.limit)
+    else:  # openrouter
+        run_benchmark_openrouter(args.prompts, args.output, args.model, args.limit)
 
 
 if __name__ == '__main__':

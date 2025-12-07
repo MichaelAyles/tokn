@@ -51,19 +51,35 @@ python benchmark/validate.py <file.tokn> [--verbose] [--roundtrip]
 Runs prompts through a model API and collects results.
 
 ```bash
-# Using Anthropic
+# Using OpenRouter (default) - requires OPENROUTER_API_KEY env var
+export OPENROUTER_API_KEY=your_key_here
+python benchmark/runner.py --limit 20
+
+# Specify model on OpenRouter
+python benchmark/runner.py --model anthropic/claude-sonnet-4 --limit 20
+python benchmark/runner.py --model openai/gpt-4o --limit 20
+python benchmark/runner.py --model google/gemini-pro-1.5 --limit 20
+
+# Using Anthropic directly
 python benchmark/runner.py --provider anthropic --model claude-sonnet-4-20250514 --limit 20
 
-# Using OpenAI
+# Using OpenAI directly
 python benchmark/runner.py --provider openai --model gpt-4o --limit 20
 ```
 
 **Arguments:**
 - `--prompts` - Path to prompts JSONL (default: `benchmark/test_prompts.jsonl`)
 - `--output` - Output path for summary (default: `benchmark/results.json`)
-- `--model` - Model name
-- `--provider` - `anthropic` or `openai`
+- `--model` - Model name (default depends on provider)
+- `--provider` - `openrouter` (default), `anthropic`, or `openai`
 - `--limit` - Limit number of prompts (for testing)
+
+**OpenRouter models:**
+- `anthropic/claude-sonnet-4` - Claude Sonnet 4
+- `anthropic/claude-haiku` - Claude Haiku (faster/cheaper)
+- `openai/gpt-4o` - GPT-4o
+- `google/gemini-pro-1.5` - Gemini Pro
+- `meta-llama/llama-3.1-70b-instruct` - Llama 3.1 70B
 
 **Output files:**
 - `benchmark/results.json` - Summary statistics
