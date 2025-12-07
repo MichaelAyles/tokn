@@ -180,6 +180,46 @@ Deductions:
 Return ONLY the JSON object, no additional text."""
 
 
+def extract_partial_scores(json_text: str) -> dict:
+    """Extract scores from truncated JSON using regex.
+
+    When the AI response is cut off mid-way through the issues/suggestions arrays,
+    we can still extract the numeric scores which appear at the start of the JSON.
+    """
+    import re
+
+    scores = {}
+
+    # Extract each score field
+    patterns = [
+        (r'"functionality_score"\s*:\s*(\d+)', 'functionality_score'),
+        (r'"completeness_score"\s*:\s*(\d+)', 'completeness_score'),
+        (r'"correctness_score"\s*:\s*(\d+)', 'correctness_score'),
+        (r'"best_practices_score"\s*:\s*(\d+)', 'best_practices_score'),
+    ]
+
+    for pattern, key in patterns:
+        match = re.search(pattern, json_text)
+        if match:
+            scores[key] = int(match.group(1))
+
+    # Check if we got all required scores
+    required = ['functionality_score', 'completeness_score', 'correctness_score', 'best_practices_score']
+    if all(k in scores for k in required):
+        # Add empty optional fields
+        scores['issues'] = []
+        scores['suggestions'] = []
+        scores['explanation'] = '(Partial response - scores extracted from truncated JSON)'
+        return scores
+
+    # If we couldn't extract all scores, raise an error
+    raise json.JSONDecodeError(
+        f"Could not extract all scores from truncated JSON. Got: {list(scores.keys())}",
+        json_text,
+        0
+    )
+
+
 def ai_score_circuit(
     prompt: str,
     generated_tokn: str,
@@ -261,8 +301,13 @@ Evaluate the circuit and return ONLY a JSON object with your assessment."""
             else:
                 json_text = response_text
 
-        # Parse the JSON response
-        result = json.loads(json_text)
+        # Parse the JSON response - try full parse first, then partial
+        result = None
+        try:
+            result = json.loads(json_text)
+        except json.JSONDecodeError:
+            # Try to extract scores from truncated JSON using regex
+            result = extract_partial_scores(json_text)
 
         # Calculate overall score (weighted average)
         overall = (

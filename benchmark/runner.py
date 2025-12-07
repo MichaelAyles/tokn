@@ -259,8 +259,40 @@ def extract_tokn(text: str) -> str:
     return ""
 
 
-def generate_tokn_openrouter(prompt: str, model: str) -> tuple[str, float]:
-    """Generate TOKN using OpenRouter API.
+def get_provider_config(model: str) -> tuple[str, str, str, dict]:
+    """Get API configuration based on model string.
+
+    Returns: (base_url, api_key_env, api_key, extra_headers)
+    """
+    # Cerebras models
+    if model.startswith("cerebras/"):
+        api_key = os.environ.get('CEREBRAS_API_KEY')
+        if not api_key:
+            raise ValueError("CEREBRAS_API_KEY environment variable not set")
+        return (
+            "https://api.cerebras.ai/v1",
+            api_key,
+            model.replace("cerebras/", ""),  # Strip prefix for actual API call
+            {}
+        )
+
+    # Default to OpenRouter
+    api_key = os.environ.get('OPENROUTER_API_KEY')
+    if not api_key:
+        raise ValueError("OPENROUTER_API_KEY environment variable not set")
+    return (
+        "https://openrouter.ai/api/v1",
+        api_key,
+        model,
+        {
+            "HTTP-Referer": "https://github.com/MichaelAyles/tokn",
+            "X-Title": "TOKN Benchmark"
+        }
+    )
+
+
+def generate_tokn(prompt: str, model: str) -> tuple[str, float]:
+    """Generate TOKN using the appropriate API provider.
 
     Returns: (generated_text, generation_time_ms)
     """
@@ -269,30 +301,28 @@ def generate_tokn_openrouter(prompt: str, model: str) -> tuple[str, float]:
     except ImportError:
         raise ImportError("openai package not installed. Run: pip install openai")
 
-    api_key = os.environ.get('OPENROUTER_API_KEY')
-    if not api_key:
-        raise ValueError("OPENROUTER_API_KEY environment variable not set")
+    base_url, api_key, actual_model, extra_headers = get_provider_config(model)
 
     client = openai.OpenAI(
-        base_url="https://openrouter.ai/api/v1",
+        base_url=base_url,
         api_key=api_key,
     )
 
     start_time = time.time()
 
     try:
-        response = client.chat.completions.create(
-            model=model,
-            max_tokens=4096,
-            messages=[
+        kwargs = {
+            "model": actual_model,
+            "max_tokens": 4096,
+            "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": prompt}
             ],
-            extra_headers={
-                "HTTP-Referer": "https://github.com/MichaelAyles/tokn",
-                "X-Title": "TOKN Benchmark"
-            }
-        )
+        }
+        if extra_headers:
+            kwargs["extra_headers"] = extra_headers
+
+        response = client.chat.completions.create(**kwargs)
         generated = response.choices[0].message.content
     except Exception as e:
         print(f"  Error: {e}")
@@ -424,7 +454,7 @@ def run_benchmark(
         print(f"[{i+1}/{len(prompts)}] [{difficulty}] {prompt[:60]}...")
 
         # Generate TOKN
-        raw_response, gen_time = generate_tokn_openrouter(prompt, model)
+        raw_response, gen_time = generate_tokn(prompt, model)
         tokn_text = extract_tokn(raw_response)
 
         # Static validation
@@ -464,7 +494,7 @@ def run_benchmark(
         # AI scoring
         if run_ai_scores and tokn_text:
             print(f"  Running AI scoring...")
-            ai_result = run_ai_scoring(prompt, tokn_text, model)
+            ai_result = run_ai_scoring(prompt, tokn_text)
             result.ai_functionality_score = ai_result.get('functionality_score', 0)
             result.ai_completeness_score = ai_result.get('completeness_score', 0)
             result.ai_correctness_score = ai_result.get('correctness_score', 0)
@@ -578,6 +608,14 @@ Examples:
   python runner.py -e 10 -H 5        # 10 easy + 5 hard (no medium)
   python runner.py --prompts file.jsonl  # Custom prompts file
   python runner.py -e 2 -m 2 -H 2 --no-ai  # Skip AI scoring
+  python runner.py -e 5 --model cerebras/llama-4-scout-17b-16e-instruct  # Use Cerebras
+
+Providers:
+  OpenRouter (default): Use model names like "google/gemini-2.5-flash"
+    - Requires OPENROUTER_API_KEY environment variable
+  Cerebras: Prefix with "cerebras/" e.g. "cerebras/llama-4-scout-17b-16e-instruct"
+    - Requires CEREBRAS_API_KEY environment variable
+    - Available models: llama-4-scout-17b-16e-instruct, llama3.1-8b, llama3.1-70b
 
 Prompt counts:
   Easy:   100 prompts (single IC, basic circuits)
@@ -597,7 +635,8 @@ Output structure:
         """
     )
     parser.add_argument('--prompts', help='Custom prompts file (overrides -e/-m/-H)')
-    parser.add_argument('--model', default='google/gemini-2.5-flash', help='Model to use')
+    parser.add_argument('--model', default='google/gemini-2.5-flash',
+                        help='Model to use (prefix with "cerebras/" for Cerebras API)')
     parser.add_argument('--no-ai', action='store_true', help='Skip AI scoring')
 
     # Difficulty flags
