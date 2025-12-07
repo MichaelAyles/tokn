@@ -313,7 +313,7 @@ def generate_tokn(prompt: str, model: str) -> tuple[str, float]:
     try:
         kwargs = {
             "model": actual_model,
-            "max_tokens": 4096,
+            "max_tokens": 16384,
             "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": prompt}

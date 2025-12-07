@@ -279,7 +279,7 @@ Evaluate the circuit and return ONLY a JSON object with your assessment."""
                 {"role": "user", "content": user_message}
             ],
             temperature=0.1,  # Low temperature for consistent scoring
-            max_tokens=2048,
+            max_tokens=8192,
             extra_headers={
                 "HTTP-Referer": "https://github.com/MichaelAyles/tokn",
                 "X-Title": "TOKN AI Scorer"
