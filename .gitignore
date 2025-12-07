@@ -39,3 +39,6 @@ testing/
 
 # Scraped data
 data/
+
+# Benchmark outputs
+benchmark/output/
