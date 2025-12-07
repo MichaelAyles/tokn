@@ -223,8 +223,6 @@ def encode_tokn(sch: Schematic, netlist: Netlist) -> str:
                     pins_for_comp.append((pin.number, pin.name))
 
             if pins_for_comp:
-                # Sort by pin number
-                pins_for_comp.sort(key=lambda p: int(p[0]) if p[0].isdigit() else p[0])
                 component_pins[comp.reference] = pins_for_comp
 
     # Output pins grouped by component
