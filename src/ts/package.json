@@ -1,0 +1,16 @@
+{
+  "name": "tokn-ts",
+  "version": "1.0.0",
+  "description": "TypeScript implementation of TOKN encoder",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "bun test.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  }
+}
